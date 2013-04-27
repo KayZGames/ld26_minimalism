@@ -19,3 +19,11 @@ class Sound extends Component {
   final String clipName;
   Sound(this.clipName);
 }
+
+class MenuItem extends Component {
+  final int x, y, width, height;
+  final String label;
+  final Function hoverAction, clickAction;
+  bool hover = false;
+  MenuItem(this.x, this.y, this.width, this.height, this.label, this.hoverAction, this.clickAction);
+}

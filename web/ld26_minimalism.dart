@@ -9,6 +9,7 @@ import 'package:simple_audio/simple_audio.dart';
 
 part 'src/achievements.dart';
 part 'src/components.dart';
+part 'src/input.dart';
 part 'src/logic.dart';
 part 'src/rendering.dart';
 part 'src/sound.dart';
@@ -37,6 +38,8 @@ class GameState {
   num score = 0;
   num _waited = 0;
   int achievementCount = 0;
+  bool running = false, hoverStart = false, wrongButton = false,
+      wrongPositionClicked = false;
   num get waited => _waited;
   void addWaited(num time) {
     _waited += time;
@@ -46,7 +49,6 @@ class GameState {
     achievementCount++;
     score += 100;
   }
-
 }
 
 class Game {
@@ -59,11 +61,16 @@ class Game {
   Game(this.wrapper, this.audioManager);
 
   void start() {
+    var e = world.createEntity();
+    e.addComponent(createStartButtonMenuItem());
+    e.addToWorld();
 
+    world.addSystem(new MenuMouseInputSystem(wrapper, gameState));
     world.addSystem(new TimeIsScoreSystem(gameState));
     world.addSystem(new AchievementSystem(gameState));
     world.addSystem(new ExpirationSystem());
     world.addSystem(new BackgroundRenderingSystem(wrapper));
+    world.addSystem(new MenuRenderingSystem(wrapper, gameState));
     world.addSystem(new GameStateRenderingSystem(wrapper, gameState));
     world.addSystem(new AchievementRenderingSystem(wrapper, gameState));
     world.addSystem(new SoundSystem(audioManager));
@@ -74,6 +81,18 @@ class Game {
       lastTime = time;
       window.animationFrame.then(gameLoop);
     });
+  }
+
+  MenuItem createStartButtonMenuItem() {
+    var onHover = () => gameState.hoverStart = true;
+    var onClick = (int button) {
+      if (button == 0) {
+        gameState.running = true;
+      } else {
+        gameState.wrongButton = true;
+      }
+    };
+    return new MenuItem(WIDTH~/2 - 100, HEIGHT~/2 - 50, 250, 100, 'START GAME', onHover, onClick);
   }
 
 

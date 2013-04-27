@@ -70,5 +70,25 @@ Map<String, dynamic> achievements = {
     'check': (GameState gameState) => gameState.waited > 3600,
     'desc': 'You have waited 1 hour! Better stop now, otherwise you\'ll miss a *ONG.',
     'label': 'GONG'
+  },
+  'hoverStart' : {
+    'check': (GameState gameState) => gameState.hoverStart,
+    'desc': 'You only have to click it.',
+    'label': 'Almost there'
+  },
+  'wrongButton' : {
+    'check': (GameState gameState) => gameState.wrongButton,
+    'desc': 'Are you sure you know what you are doing?',
+    'label': 'Too many buttons'
+  },
+  'wrongPosition' : {
+    'check': (GameState gameState) => gameState.wrongPositionClicked,
+    'desc': 'Everything alright?',
+    'label': 'Drunken style'
+  },
+  'gameStarted' : {
+    'check': (GameState gameState) => gameState.running,
+    'desc': 'Wow, you must be a bright one!',
+    'label': 'Game started'
   }
 };

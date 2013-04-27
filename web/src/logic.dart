@@ -7,6 +7,8 @@ class TimeIsScoreSystem extends VoidEntitySystem {
   processSystem() {
     gameState.addWaited(world.delta / 1000);
   }
+
+  checkProcessing() => gameState.running;
 }
 
 class AchievementSystem extends VoidEntitySystem {

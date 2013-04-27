@@ -10,7 +10,6 @@ class BackgroundRenderingSystem extends VoidEntitySystem {
   }
 }
 
-
 class GameStateRenderingSystem extends VoidEntitySystem {
   const LABEL_SCORE = 'Score: ';
   const LABEL_ACHIEVEMENTS = 'Achievements: ';
@@ -38,6 +37,8 @@ class GameStateRenderingSystem extends VoidEntitySystem {
     textBounds = wrapper.textBoundaries(text);
     wrapper.fillText(text, WIDTH - textBounds.width, achievementsY);
   }
+
+  checkProcessing() => gameState.running;
 }
 
 class AchievementRenderingSystem extends EntitySystem {
@@ -115,4 +116,48 @@ class AchievementRenderingSystem extends EntitySystem {
   }
 
   checkProcessing() => true;
+}
+
+class MenuRenderingSystem extends EntityProcessingSystem {
+  ComponentMapper<MenuItem> mm;
+  CqWrapper wrapper;
+  GameState gameState;
+  MenuRenderingSystem(this.wrapper, this.gameState) : super(Aspect.getAspectForAllOf([MenuItem]));
+
+  initialize() {
+    mm = new ComponentMapper<MenuItem>(MenuItem, world);
+  }
+
+  processEntity(Entity e) {
+    var m = mm.get(e);
+    var bounds = wrapper.textBoundaries(m.label);
+    var fillStyle, strokeStyle, textColor;
+    if (m.hover) {
+      fillStyle = '#d37d2c';
+      strokeStyle = '#6daa2c';
+      textColor = '#dfefd7';
+    } else {
+      fillStyle = '#d34549';
+      strokeStyle = '#346524';
+      textColor = '#dbd75d';
+    }
+    wrapper..roundRect(m.x, m.y, m.width, m.height, 20, strokeStyle: strokeStyle, fillStyle: fillStyle)
+           ..fillStyle = textColor
+           ..fillText(m.label, m.x + m.width / 2 - bounds.width / 2,
+                               m.y + m.height / 2 - bounds.height / 2);
+  }
+
+  begin() {
+    wrapper..save()
+           ..clear(color: '#dfefd7')
+           ..lineWidth = 5
+           ..roundRect(20, 20, WIDTH - 40, HEIGHT - 40, 20, strokeStyle: '#346524', fillStyle: '#30346d');
+
+  }
+
+  end() {
+    wrapper.restore();
+  }
+
+  checkProcessing() => !gameState.running;
 }
