@@ -27,3 +27,23 @@ class MenuItem extends Component {
   bool hover = false;
   MenuItem(this.x, this.y, this.width, this.height, this.label, this.hoverAction, this.clickAction);
 }
+
+class RectangleBody extends Component {
+  num width, height;
+  RectangleBody(this.width, this.height);
+}
+
+class Position extends Component {
+  num x, y;
+  Position(this.x, this.y);
+}
+
+class PlayerFollower extends Component {
+  num minX, maxX, minY, maxY, maxChangeX, maxChangeY;
+  PlayerFollower(this.minX, this.maxX, this.minY, this.maxY, this.maxChangeX, this.maxChangeY);
+}
+
+class RenderStyle extends Component {
+  String strokeStyle, fillStyle;
+  RenderStyle({this.strokeStyle, this.fillStyle});
+}

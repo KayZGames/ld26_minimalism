@@ -2,6 +2,7 @@ library ld26_minimalism;
 
 import 'dart:async';
 import 'dart:html';
+import 'dart:math';
 
 import 'package:dartemis/dartemis.dart';
 import 'package:canvas_query/canvas_query.dart';
@@ -10,6 +11,7 @@ import 'package:lawndart/lawndart.dart';
 
 part 'src/achievements.dart';
 part 'src/components.dart';
+part 'src/games.dart';
 part 'src/input.dart';
 part 'src/logic.dart';
 part 'src/rendering.dart';
@@ -18,6 +20,8 @@ part 'src/storage.dart';
 
 const WIDTH = 800;
 const HEIGHT = 600;
+
+const TAG_PLAYER = 'player';
 
 void main() {
   window.setImmediate(() {
@@ -39,12 +43,24 @@ void main() {
 }
 
 class GameState {
+  final maxGames = 2;
   num _score = 0, highScore = 0;
   num _waited = 0;
   int achievementCount = 0;
+  int gameId = 0;
   bool running = false, hoverStart = false, wrongButton = false,
       wrongPositionClicked = false;
   num get waited => _waited;
+  GameState();
+
+  set score(num score) {
+    _score = score;
+    if (score > highScore) {
+      highScore = score;
+    }
+  }
+  get score => _score;
+
   void addWaited(num time) {
     _waited += time;
     score += time;
@@ -53,13 +69,6 @@ class GameState {
     achievementCount++;
     score += 100;
   }
-  set score(num score) {
-    _score = score;
-    if (score > highScore) {
-      highScore = score;
-    }
-  }
-  get score => _score;
 }
 
 class Game {
@@ -73,20 +82,32 @@ class Game {
   Game(this.wrapper, this.audioManager, this.store);
 
   void start() {
+    var tm = new TagManager();
+    world.addManager(tm);
+
     var e = world.createEntity();
     e.addComponent(createStartButtonMenuItem());
     e.addToWorld();
 
+    e = world.createEntity();
+    e.addComponent(new Position(0, 0));
+    e.addToWorld();
+    tm.register(e, TAG_PLAYER);
+
     world.addSystem(new MenuMouseInputSystem(wrapper, gameState));
+    world.addSystem(new MouseMovementSystem(wrapper));
     world.addSystem(new TimeIsScoreSystem(gameState));
     world.addSystem(new AchievementSystem(gameState));
     world.addSystem(new ExpirationSystem());
+    world.addSystem(new PlayerFollowingMovementSystem());
     world.addSystem(new BackgroundRenderingSystem(wrapper));
+    world.addSystem(new RectangleRenderingSystem(wrapper));
     world.addSystem(new MenuRenderingSystem(wrapper, gameState));
     world.addSystem(new GameStateRenderingSystem(wrapper, gameState));
     world.addSystem(new AchievementRenderingSystem(wrapper, gameState));
     world.addSystem(new SoundSystem(audioManager));
     world.addSystem(new HighScoreSavingSystem(store, gameState));
+    world.addSystem(new GameSwitchingSystem(gameState));
 
     world.initialize();
 
@@ -108,7 +129,6 @@ class Game {
     return new MenuItem(WIDTH~/2 - 100, HEIGHT~/2 - 50, 250, 100, 'START GAME', onHover, onClick);
   }
 
-
   void gameLoop(num time) {
     world.delta = time - lastTime;
     lastTime = time;
@@ -116,3 +136,5 @@ class Game {
     window.animationFrame.then(gameLoop);
   }
 }
+
+typedef void GameInitializer();

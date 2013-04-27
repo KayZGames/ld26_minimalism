@@ -51,3 +51,37 @@ class ExpirationSystem extends EntityProcessingSystem {
     }
   }
 }
+
+class PlayerFollowingMovementSystem extends EntityProcessingSystem {
+  Position playerPos;
+  ComponentMapper<Position> pm;
+  ComponentMapper<PlayerFollower> fm;
+  PlayerFollowingMovementSystem() : super(Aspect.getAspectForAllOf([Position, PlayerFollower]));
+
+  initialize() {
+    TagManager tm = world.getManager(TagManager);
+    playerPos = tm.getEntity(TAG_PLAYER).getComponentByClass(Position);
+    pm = new ComponentMapper<Position>(Position, world);
+    fm = new ComponentMapper<PlayerFollower>(PlayerFollower, world);
+  }
+
+  processEntity(Entity e) {
+    var pos = pm.get(e);
+    var follower = fm.get(e);
+    var targetX = getTarget(playerPos.x, follower.minX, follower.maxX);
+    var targetY = getTarget(playerPos.y, follower.minY, follower.maxY);
+    var diffX = targetX - pos.x;
+    var diffY = targetY - pos.y;
+    pos.x += FastMath.signum(diffX) * min(diffX.abs(), follower.maxChangeX);
+    pos.y += FastMath.signum(diffY) * min(diffY.abs(), follower.maxChangeY);
+  }
+
+  num getTarget(num targetPos, num minPos, num maxPos) {
+    if (targetPos > maxPos) {
+      targetPos = maxPos;
+    } else if (targetPos < minPos) {
+      targetPos = minPos;
+    }
+    return targetPos;
+  }
+}

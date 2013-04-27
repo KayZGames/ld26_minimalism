@@ -6,8 +6,11 @@ class BackgroundRenderingSystem extends VoidEntitySystem {
   BackgroundRenderingSystem(this.wrapper);
 
   processSystem() {
-    wrapper.clear();
+    wrapper.clear(color: '#dfefd7');
   }
+
+  begin() => wrapper.save();
+  end() => wrapper.restore();
 }
 
 class GameStateRenderingSystem extends VoidEntitySystem {
@@ -46,6 +49,8 @@ class GameStateRenderingSystem extends VoidEntitySystem {
   }
 
   checkProcessing() => gameState.running;
+  begin() => wrapper.save();
+  end() => wrapper.restore();
 }
 
 class AchievementRenderingSystem extends EntitySystem {
@@ -168,3 +173,35 @@ class MenuRenderingSystem extends EntityProcessingSystem {
 
   checkProcessing() => !gameState.running;
 }
+
+class RectangleRenderingSystem extends EntityProcessingSystem {
+  ComponentMapper<RectangleBody> rbm;
+  ComponentMapper<Position> pm;
+  ComponentMapper<RenderStyle> sm;
+  CqWrapper wrapper;
+  RectangleRenderingSystem(this.wrapper) : super(Aspect.getAspectForAllOf([RectangleBody, Position, RenderStyle]));
+
+  initialize() {
+    rbm = new ComponentMapper<RectangleBody>(RectangleBody, world);
+    pm = new ComponentMapper<Position>(Position, world);
+    sm = new ComponentMapper<RenderStyle>(RenderStyle, world);
+  }
+
+  processEntity(Entity e) {
+    var pos = pm.get(e);
+    var body = rbm.get(e);
+    var style = sm.get(e);
+
+    wrapper..strokeStyle = style.strokeStyle
+        ..fillStyle = style.fillStyle
+        ..beginPath()
+        ..rect(pos.x - body.width/2, pos.y - body.height/2, body.width, body.height)
+        ..closePath()
+        ..fill()
+        ..stroke();
+  }
+
+  begin() => wrapper.save();
+  end() => wrapper.restore();
+}
+
