@@ -1,0 +1,8 @@
+name: ld26_minimalism
+description: A sample web application
+author: Dennis.Kaselow+ld@gmail.com
+dependencies:
+  browser: any
+  dartemis: any
+  canvas_query: any
+
