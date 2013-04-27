@@ -21,6 +21,9 @@ class AchievementSystem extends VoidEntitySystem {
         e.addComponent(new Achievement(achievement['label'], achievement['desc'], gameState.achievementCount));
         e.addComponent(new ExpirationTimer(5000));
         e.addToWorld();
+        e = world.createEntity();
+        e.addComponent(new Sound('achievement'));
+        e.addToWorld();
         gameState.achievementEarned();
         matches.add(key);
       }

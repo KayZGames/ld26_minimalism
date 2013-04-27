@@ -14,3 +14,8 @@ class ExpirationTimer extends Component {
   }
   double get ratio => current <= 0.0 ? 0.0 : current / max;
 }
+
+class Sound extends Component {
+  final String clipName;
+  Sound(this.clipName);
+}

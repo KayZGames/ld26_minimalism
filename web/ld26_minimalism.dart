@@ -1,14 +1,17 @@
 library ld26_minimalism;
 
+import 'dart:async';
 import 'dart:html';
 
 import 'package:dartemis/dartemis.dart';
 import 'package:canvas_query/canvas_query.dart';
+import 'package:simple_audio/simple_audio.dart';
 
 part 'src/achievements.dart';
 part 'src/components.dart';
 part 'src/logic.dart';
 part 'src/rendering.dart';
+part 'src/sound.dart';
 
 const WIDTH = 800;
 const HEIGHT = 600;
@@ -22,7 +25,11 @@ void main() {
            ..font = '20px Verdana'
            ..fillStyle = '#140c1c';
 
-    new Game(wrapper).start();
+    var audioManager = createAudioManager();
+
+    Future.wait([audioManager.makeClip('achievement', 'achievement.ogg').load()]).then((_) {
+      new Game(wrapper, audioManager).start();
+    });
   });
 }
 
@@ -47,8 +54,9 @@ class Game {
   World world = new World();
   num lastTime;
   CqWrapper wrapper;
+  AudioManager audioManager;
 
-  Game(this.wrapper);
+  Game(this.wrapper, this.audioManager);
 
   void start() {
 
@@ -58,6 +66,7 @@ class Game {
     world.addSystem(new BackgroundRenderingSystem(wrapper));
     world.addSystem(new GameStateRenderingSystem(wrapper, gameState));
     world.addSystem(new AchievementRenderingSystem(wrapper, gameState));
+    world.addSystem(new SoundSystem(audioManager));
 
     world.initialize();
 
