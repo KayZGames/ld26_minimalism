@@ -5,6 +5,8 @@ import 'dart:html';
 import 'package:dartemis/dartemis.dart';
 import 'package:canvas_query/canvas_query.dart';
 
+part 'src/achievements.dart';
+part 'src/components.dart';
 part 'src/logic.dart';
 part 'src/rendering.dart';
 
@@ -17,7 +19,8 @@ void main() {
     wrapper..canvas.height = HEIGHT
            ..canvas.width = WIDTH
            ..textBaseline = 'top'
-           ..font = '20px Verdana';
+           ..font = '20px Verdana'
+           ..fillStyle = '#140c1c';
 
     new Game(wrapper).start();
   });
@@ -25,6 +28,18 @@ void main() {
 
 class GameState {
   num score = 0;
+  num _waited = 0;
+  int achievementCount = 0;
+  num get waited => _waited;
+  void addWaited(num time) {
+    _waited += time;
+    score += time;
+  }
+  void achievementEarned() {
+    achievementCount++;
+    score += 100;
+  }
+
 }
 
 class Game {
@@ -38,8 +53,11 @@ class Game {
   void start() {
 
     world.addSystem(new TimeIsScoreSystem(gameState));
+    world.addSystem(new AchievementSystem(gameState));
+    world.addSystem(new ExpirationSystem());
     world.addSystem(new BackgroundRenderingSystem(wrapper));
     world.addSystem(new GameStateRenderingSystem(wrapper, gameState));
+    world.addSystem(new AchievementRenderingSystem(wrapper, gameState));
 
     world.initialize();
 
@@ -55,25 +73,5 @@ class Game {
     lastTime = time;
     world.process();
     window.animationFrame.then(gameLoop);
-  }
-}
-class GameStateRenderingSystem extends VoidEntitySystem {
-  const LABEL_SCORE = 'Score: ';
-  Rect scoreLabelBounds;
-  num scoreY;
-  CqWrapper wrapper;
-  GameState gameState;
-  GameStateRenderingSystem(this.wrapper, this.gameState);
-
-  initialize() {
-    scoreLabelBounds = wrapper.textBoundaries(LABEL_SCORE);
-    scoreY = HEIGHT - scoreLabelBounds.height;
-  }
-
-  processSystem() {
-    wrapper.fillText(LABEL_SCORE, WIDTH - 150 - scoreLabelBounds.width, scoreY);
-    var score = gameState.score.toStringAsFixed(3);
-    var scoreBounds = wrapper.textBoundaries(score);
-    wrapper.fillText(score, WIDTH - scoreBounds.width, scoreY);
   }
 }
