@@ -5,6 +5,7 @@ dependencies:
   browser: any
   dartemis: any
   canvas_query: any
+  lawndart: any
   simple_audio:
     git: git://github.com/johnmccutchan/simpleaudio.git
 
