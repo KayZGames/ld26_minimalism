@@ -34,8 +34,8 @@ class RectangleBody extends Component {
 }
 
 class Position extends Component {
-  num x, y;
-  Position(this.x, this.y);
+  num cx, cy;
+  Position(this.cx, this.cy);
 }
 
 class PlayerFollower extends Component {
@@ -46,4 +46,11 @@ class PlayerFollower extends Component {
 class RenderStyle extends Component {
   String strokeStyle, fillStyle;
   RenderStyle({this.strokeStyle, this.fillStyle});
+}
+
+class Velocity extends Component {
+  num amount, _angle;
+  Velocity(this.amount, this._angle);
+  set angle(num value) => _angle = value % FastMath.TWO_PI;
+  get angle => _angle;
 }

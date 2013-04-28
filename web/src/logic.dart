@@ -68,12 +68,12 @@ class PlayerFollowingMovementSystem extends EntityProcessingSystem {
   processEntity(Entity e) {
     var pos = pm.get(e);
     var follower = fm.get(e);
-    var targetX = getTarget(playerPos.x, follower.minX, follower.maxX);
-    var targetY = getTarget(playerPos.y, follower.minY, follower.maxY);
-    var diffX = targetX - pos.x;
-    var diffY = targetY - pos.y;
-    pos.x += FastMath.signum(diffX) * min(diffX.abs(), follower.maxChangeX);
-    pos.y += FastMath.signum(diffY) * min(diffY.abs(), follower.maxChangeY);
+    var targetX = getTarget(playerPos.cx, follower.minX, follower.maxX);
+    var targetY = getTarget(playerPos.cy, follower.minY, follower.maxY);
+    var diffX = targetX - pos.cx;
+    var diffY = targetY - pos.cy;
+    pos.cx += FastMath.signum(diffX) * min(diffX.abs(), follower.maxChangeX * world.delta);
+    pos.cy += FastMath.signum(diffY) * min(diffY.abs(), follower.maxChangeY * world.delta);
   }
 
   num getTarget(num targetPos, num minPos, num maxPos) {
@@ -83,5 +83,124 @@ class PlayerFollowingMovementSystem extends EntityProcessingSystem {
       targetPos = minPos;
     }
     return targetPos;
+  }
+}
+
+class MovementSystem extends EntityProcessingSystem {
+  ComponentMapper<Position> pm;
+  ComponentMapper<Velocity> vm;
+  MovementSystem() : super(Aspect.getAspectForAllOf([Position, Velocity]));
+
+  initialize() {
+    vm = new ComponentMapper<Velocity>(Velocity, world);
+    pm = new ComponentMapper<Position>(Position, world);
+  }
+
+  processEntity(Entity e) {
+    var v = vm.get(e);
+    var p = pm.get(e);
+    p.cx += v.amount * cos(v.angle) * world.delta;
+    p.cy += v.amount * sin(-v.angle) * world.delta;
+  }
+}
+
+class PongCollisionDetectionSystem extends EntityProcessingSystem {
+  GroupManager gm;
+  ComponentMapper<Position> pm;
+  ComponentMapper<Velocity> vm;
+  ComponentMapper<RectangleBody> bm;
+
+  PongCollisionDetectionSystem() : super(Aspect.getAspectForAllOf([Position, RectangleBody, Velocity]).exclude([PlayerFollower]));
+
+  initialize() {
+    gm = world.getManager(GroupManager);
+    vm = new ComponentMapper<Velocity>(Velocity, world);
+    pm = new ComponentMapper<Position>(Position, world);
+    bm = new ComponentMapper<RectangleBody>(RectangleBody, world);
+  }
+
+  processEntity(Entity e) {
+    var ballPos = pm.get(e);
+    var ballBody = bm.get(e);
+    var paddles = gm.getEntities(GROUP_PONG_PADDLE);
+    paddles.forEach((paddle) {
+      var paddlePos = pm.get(paddle);
+      var paddleBody = bm.get(paddle);
+      var xDiff = ballPos.cx - paddlePos.cx;
+      var yDiff = ballPos.cy - paddlePos.cy;
+      if (isColliding(xDiff, yDiff, ballBody, paddleBody)) {
+        var ballVel = vm.get(e);
+        var nextAngle = getNextAngle(ballPos, ballBody, paddlePos, paddleBody, ballVel);
+
+        do {
+          ballPos.cx -= ballVel.amount * cos(ballVel.angle) * world.delta;
+          ballPos.cy -= ballVel.amount * sin(-ballVel.angle) * world.delta;
+          xDiff = ballPos.cx - paddlePos.cx;
+          yDiff = ballPos.cy - paddlePos.cy;
+        } while (isColliding(xDiff, yDiff, ballBody, paddleBody));
+
+        ballVel.angle = nextAngle;
+      }
+    });
+  }
+
+  num getNextAngle(Position ballPos, RectangleBody ballBody, Position paddlePos, RectangleBody paddleBody, Velocity ballVel) {
+    var nextAngle;
+    var ballRect = getRect(ballPos, ballBody);
+    var paddleRect = getRect(paddlePos, paddleBody);
+    var intersection = ballRect.intersection(paddleRect);
+    if (ballVel.angle < PI/2) {
+      if (isLeftOrRight(intersection)) {
+        // right
+        nextAngle = PI - ballVel.angle;
+      } else {
+        // top
+        nextAngle = -ballVel.angle;
+      }
+    } else if (ballVel.angle < PI) {
+      if (isLeftOrRight(intersection)) {
+        // left
+        nextAngle = PI - ballVel.angle;
+      } else {
+        // top
+        nextAngle = -ballVel.angle;
+      }
+    } else if (ballVel.angle < 3 * PI/2) {
+      if (isLeftOrRight(intersection)) {
+        // left
+        nextAngle = PI - ballVel.angle;
+      } else {
+        // bottom
+        nextAngle = -ballVel.angle;
+      }
+    } else {
+      if (isLeftOrRight(intersection)) {
+        // right
+        nextAngle = PI - ballVel.angle;
+      } else {
+        // bottom
+        nextAngle = -ballVel.angle;
+      }
+    }
+    return nextAngle;
+  }
+
+  Rect getRect(Position pos, RectangleBody body) {
+    return new Rect(pos.cx - body.width/2, pos.cy - body.height/2, body.width, body.height);
+  }
+
+  bool isLeftOrRight(Rect intersection) {
+    if (intersection.width < intersection.height) {
+      return true;
+    }
+    return false;
+  }
+
+  bool isColliding(num xDiff, num yDiff, RectangleBody ballBody, RectangleBody paddleBody) {
+    if (xDiff.abs() <= ballBody.width/2 + paddleBody.width/2
+        && yDiff.abs() <= ballBody.height/2 + paddleBody.height/2) {
+        return true;
+    }
+    return false;
   }
 }

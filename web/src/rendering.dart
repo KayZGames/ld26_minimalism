@@ -195,7 +195,7 @@ class RectangleRenderingSystem extends EntityProcessingSystem {
     wrapper..strokeStyle = style.strokeStyle
         ..fillStyle = style.fillStyle
         ..beginPath()
-        ..rect(pos.x - body.width/2, pos.y - body.height/2, body.width, body.height)
+        ..rect(pos.cx - body.width/2, pos.cy - body.height/2, body.width, body.height)
         ..closePath()
         ..fill()
         ..stroke();

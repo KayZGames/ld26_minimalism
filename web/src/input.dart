@@ -54,8 +54,8 @@ class MouseMovementSystem extends VoidEntitySystem {
 
   processSystem() {
     if (null != mousePos) {
-      pos.x = mousePos.x;
-      pos.y = mousePos.y;
+      pos.cx = mousePos.x;
+      pos.cy = mousePos.y;
     }
   }
 }

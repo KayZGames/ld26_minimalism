@@ -22,6 +22,10 @@ const WIDTH = 800;
 const HEIGHT = 600;
 
 const TAG_PLAYER = 'player';
+const GROUP_PONG_BALL = 'pongball';
+const GROUP_PONG_PADDLE = 'pongpaddle';
+
+Random random = new Random();
 
 void main() {
   window.setImmediate(() {
@@ -83,7 +87,9 @@ class Game {
 
   void start() {
     var tm = new TagManager();
+    var gm = new GroupManager();
     world.addManager(tm);
+    world.addManager(gm);
 
     var e = world.createEntity();
     e.addComponent(createStartButtonMenuItem());
@@ -100,6 +106,8 @@ class Game {
     world.addSystem(new AchievementSystem(gameState));
     world.addSystem(new ExpirationSystem());
     world.addSystem(new PlayerFollowingMovementSystem());
+    world.addSystem(new MovementSystem());
+    world.addSystem(new PongCollisionDetectionSystem());
     world.addSystem(new BackgroundRenderingSystem(wrapper));
     world.addSystem(new RectangleRenderingSystem(wrapper));
     world.addSystem(new MenuRenderingSystem(wrapper, gameState));
@@ -136,5 +144,3 @@ class Game {
     window.animationFrame.then(gameLoop);
   }
 }
-
-typedef void GameInitializer();
