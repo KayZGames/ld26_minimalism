@@ -48,7 +48,11 @@ class GameSwitchingSystem extends IntervalEntitySystem {
     }
   }
 
-  checkProcessing() => gameState.running && super.checkProcessing();
+  checkProcessing() {
+    var result = gameState.running && super.checkProcessing();
+    gameState.countdown = (20000 - delta) ~/ 1000;
+    return result;
+  }
 
   void noop() {
     // wait
@@ -57,14 +61,17 @@ class GameSwitchingSystem extends IntervalEntitySystem {
   void initNotPong() {
     createPongBall(PI/4 + random.nextDouble() * PI/2);
     createPaddle(WIDTH~/2, HEIGHT - 100,  100, 20);
-    createPaddle(WIDTH~/2, 100,  WIDTH - 220, 20);
-    createPaddle(100, HEIGHT ~/ 2,  20, HEIGHT - 220);
-    createPaddle(WIDTH - 100, HEIGHT ~/ 2,  20, HEIGHT - 220);
+    createPaddle(WIDTH~/2, 100,  WIDTH - 220, 20, speedup: true);
+    createPaddle(100, HEIGHT ~/ 2,  20, HEIGHT - 220, speedup: true);
+    createPaddle(WIDTH - 100, HEIGHT ~/ 2,  20, HEIGHT - 220, speedup: true);
   }
 
   void resetPongBall() {
     if (gm.getEntities(gameState.getGroup(GROUP_PONG_BALL)).isEmpty) {
-      createPongBall(PI/4 + random.nextDouble() * PI/2);
+      var amount = 1 + max(0, gameState.score ~/ 250);
+      for (int i = 0; i < amount; i++) {
+        createPongBall(PI/4 + random.nextDouble() * PI/2);
+      }
     }
   }
 
@@ -101,7 +108,7 @@ class GameSwitchingSystem extends IntervalEntitySystem {
     e.addComponent(new Position(WIDTH~/2, HEIGHT~/2));
     e.addComponent(new CircleBody(25));
     e.addComponent(new RenderStyle(fillStyle: '#d37d2c'));
-    e.addComponent(new PlayerFollower(100, WIDTH - 100, 100, HEIGHT - 100, 0.5));
+    e.addComponent(new PlayerFollower(100, WIDTH - 100, 100, HEIGHT - 100, 1));
     e.addToWorld();
     tm.register(e, TAG_DODGEBALLPLAYER);
     gm.add(e, gameState.getGroup(GROUP_GAME));
@@ -118,8 +125,11 @@ class GameSwitchingSystem extends IntervalEntitySystem {
     gm.add(e, gameState.getGroup(GROUP_GAME));
   }
 
-  void createPaddle(int cx, int cy, int width, int height) {
+  void createPaddle(int cx, int cy, int width, int height, {bool speedup: false}) {
     var e = world.createEntity();
+    if (speedup) {
+      e.addComponent(new Speedup());
+    }
     e.addComponent(new Position(cx, cy));
     e.addComponent(new RectangleBody(width, height));
     e.addComponent(new RenderStyle(strokeStyle: '#452434', fillStyle: '#8696a2'));
@@ -127,7 +137,7 @@ class GameSwitchingSystem extends IntervalEntitySystem {
                                       WIDTH - (100 + height~/2 + width~/2),
                                       100 + height~/2 + width~/2,
                                       HEIGHT - (100 + height~/2 + width~/2),
-                                      0.5,
+                                      1,
                                       horizontal: width > height ? true : false,
                                       vertical: height > width ? true : false));
     e.addToWorld();

@@ -136,6 +136,7 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
   ComponentMapper<Velocity> vm;
   ComponentMapper<RectangleBody> bm;
   ComponentMapper<Destroyable> dm;
+  ComponentMapper<Speedup> sm;
   GameState gameState;
 
   PongCollisionDetectionSystem(this.gameState) : super(Aspect.getAspectForAllOf([Position, RectangleBody, Velocity]).exclude([PlayerFollower]));
@@ -146,6 +147,7 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
     pm = new ComponentMapper<Position>(Position, world);
     bm = new ComponentMapper<RectangleBody>(RectangleBody, world);
     dm = new ComponentMapper<Destroyable>(Destroyable, world);
+    sm = new ComponentMapper<Speedup>(Speedup, world);
   }
 
   processEntity(Entity e) {
@@ -180,6 +182,9 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
             gameState.pongLost = 0;
           }
           createSound(world, 'paddlehit');
+        }
+        if (null != sm.getSafe(block)) {
+          ballVel.amount += 0.01;
         }
       }
     });
@@ -246,6 +251,13 @@ class DodgeballSpawningSystem extends IntervalEntitySystem {
   }
 
   processEntities(_) {
+    var amount = 1 + max(0, gameState.score ~/ 250);
+    for (int i = 0; i < amount; i++) {
+      spawnBall();
+    }
+  }
+
+  void spawnBall() {
     var x, y;
     if (random.nextBool()) {
       x = random.nextInt(WIDTH);

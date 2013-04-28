@@ -17,8 +17,9 @@ class GameStateRenderingSystem extends VoidEntitySystem {
   const LABEL_SCORE = 'Score: ';
   const LABEL_HIGHSCORE = 'Highscore: ';
   const LABEL_ACHIEVEMENTS = 'Achievements: ';
-  Rect scoreLabelBounds, achievementsLabelBounds, highScoreLabelBounds;
-  num scoreY, achievementsY;
+  const LABEL_COUNTDOWN = 'Countdown: ';
+  Rect scoreLabelBounds, achievementsLabelBounds, highScoreLabelBounds, countdownLabelBounds;
+  num scoreY, achievementsY, countdownY;
   CqWrapper wrapper;
   GameState gameState;
   GameStateRenderingSystem(this.wrapper, this.gameState);
@@ -27,13 +28,16 @@ class GameStateRenderingSystem extends VoidEntitySystem {
     scoreLabelBounds = wrapper.textBoundaries(LABEL_SCORE);
     achievementsLabelBounds = wrapper.textBoundaries(LABEL_ACHIEVEMENTS);
     highScoreLabelBounds = wrapper.textBoundaries(LABEL_HIGHSCORE);
+    countdownLabelBounds = wrapper.textBoundaries(LABEL_COUNTDOWN);
     scoreY = HEIGHT - scoreLabelBounds.height;
     achievementsY = scoreY - achievementsLabelBounds.height;
+    countdownY = achievementsY - countdownLabelBounds.height;
   }
 
   processSystem() {
     wrapper.fillText(LABEL_SCORE, WIDTH - 150 - scoreLabelBounds.width, scoreY);
     wrapper.fillText(LABEL_ACHIEVEMENTS, WIDTH - 150 - achievementsLabelBounds.width, achievementsY);
+    wrapper.fillText(LABEL_COUNTDOWN, WIDTH - 150 - countdownLabelBounds.width, countdownY);
     wrapper.fillText(LABEL_HIGHSCORE, WIDTH - 150 - highScoreLabelBounds.width, 0);
     var text = gameState.score.toStringAsFixed(3);
     var textBounds = wrapper.textBoundaries(text);
@@ -42,6 +46,10 @@ class GameStateRenderingSystem extends VoidEntitySystem {
     text = gameState.achievementCount.toString();
     textBounds = wrapper.textBoundaries(text);
     wrapper.fillText(text, WIDTH - textBounds.width, achievementsY);
+
+    text = gameState.countdown.toString();
+    textBounds = wrapper.textBoundaries(text);
+    wrapper.fillText(text, WIDTH - textBounds.width, countdownY);
 
     text = gameState.highScore.toStringAsFixed(3);
     textBounds = wrapper.textBoundaries(text);

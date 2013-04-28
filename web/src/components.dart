@@ -62,3 +62,4 @@ class Velocity extends Component {
 }
 
 class Destroyable extends Component {}
+class Speedup extends Component {}
