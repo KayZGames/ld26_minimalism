@@ -23,7 +23,8 @@ const HEIGHT = 600;
 
 const TAG_PLAYER = 'player';
 const GROUP_PONG_BALL = 'pongball';
-const GROUP_PONG_PADDLE = 'pongpaddle';
+const GROUP_BLOCK = 'block';
+const GROUP_GAME = 'gamegroup';
 
 Random random = new Random();
 
@@ -64,6 +65,7 @@ class GameState {
     }
   }
   get score => _score;
+  String getGroup(String name) => '${name}_${gameId}';
 
   void addWaited(num time) {
     _waited += time;
@@ -107,7 +109,7 @@ class Game {
     world.addSystem(new ExpirationSystem());
     world.addSystem(new PlayerFollowingMovementSystem());
     world.addSystem(new MovementSystem());
-    world.addSystem(new PongCollisionDetectionSystem());
+    world.addSystem(new PongCollisionDetectionSystem(gameState));
     world.addSystem(new BackgroundRenderingSystem(wrapper));
     world.addSystem(new RectangleRenderingSystem(wrapper));
     world.addSystem(new MenuRenderingSystem(wrapper, gameState));

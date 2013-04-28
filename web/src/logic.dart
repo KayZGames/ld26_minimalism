@@ -109,23 +109,26 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
   ComponentMapper<Position> pm;
   ComponentMapper<Velocity> vm;
   ComponentMapper<RectangleBody> bm;
+  ComponentMapper<Destroyable> dm;
+  GameState gameState;
 
-  PongCollisionDetectionSystem() : super(Aspect.getAspectForAllOf([Position, RectangleBody, Velocity]).exclude([PlayerFollower]));
+  PongCollisionDetectionSystem(this.gameState) : super(Aspect.getAspectForAllOf([Position, RectangleBody, Velocity]).exclude([PlayerFollower]));
 
   initialize() {
     gm = world.getManager(GroupManager);
     vm = new ComponentMapper<Velocity>(Velocity, world);
     pm = new ComponentMapper<Position>(Position, world);
     bm = new ComponentMapper<RectangleBody>(RectangleBody, world);
+    dm = new ComponentMapper<Destroyable>(Destroyable, world);
   }
 
   processEntity(Entity e) {
     var ballPos = pm.get(e);
     var ballBody = bm.get(e);
-    var paddles = gm.getEntities(GROUP_PONG_PADDLE);
-    paddles.forEach((paddle) {
-      var paddlePos = pm.get(paddle);
-      var paddleBody = bm.get(paddle);
+    var blocks = gm.getEntities(gameState.getGroup(GROUP_BLOCK));
+    blocks.forEach((block) {
+      var paddlePos = pm.get(block);
+      var paddleBody = bm.get(block);
       var xDiff = ballPos.cx - paddlePos.cx;
       var yDiff = ballPos.cy - paddlePos.cy;
       if (isColliding(xDiff, yDiff, ballBody, paddleBody)) {
@@ -140,6 +143,7 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
         } while (isColliding(xDiff, yDiff, ballBody, paddleBody));
 
         ballVel.angle = nextAngle;
+        if (null != dm.getSafe(block)) block.deleteFromWorld();
       }
     });
   }
@@ -149,36 +153,16 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
     var ballRect = getRect(ballPos, ballBody);
     var paddleRect = getRect(paddlePos, paddleBody);
     var intersection = ballRect.intersection(paddleRect);
-    if (ballVel.angle < PI/2) {
-      if (isLeftOrRight(intersection)) {
-        // right
-        nextAngle = PI - ballVel.angle;
+    if (isLeftOrRight(intersection)) {
+      if ((intersection.width - intersection.height).abs() < 6) {
+        nextAngle = PI - ballVel.angle - PI/4 + random.nextDouble() * PI/2;
       } else {
-        // top
-        nextAngle = -ballVel.angle;
-      }
-    } else if (ballVel.angle < PI) {
-      if (isLeftOrRight(intersection)) {
-        // left
         nextAngle = PI - ballVel.angle;
-      } else {
-        // top
-        nextAngle = -ballVel.angle;
-      }
-    } else if (ballVel.angle < 3 * PI/2) {
-      if (isLeftOrRight(intersection)) {
-        // left
-        nextAngle = PI - ballVel.angle;
-      } else {
-        // bottom
-        nextAngle = -ballVel.angle;
       }
     } else {
-      if (isLeftOrRight(intersection)) {
-        // right
-        nextAngle = PI - ballVel.angle;
+      if ((intersection.width - intersection.height).abs() < 6) {
+        nextAngle = -ballVel.angle - PI/4 + random.nextDouble() * PI/2;
       } else {
-        // bottom
         nextAngle = -ballVel.angle;
       }
     }

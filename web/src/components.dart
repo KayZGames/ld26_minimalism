@@ -54,3 +54,5 @@ class Velocity extends Component {
   set angle(num value) => _angle = value % FastMath.TWO_PI;
   get angle => _angle;
 }
+
+class Destroyable extends Component {}
