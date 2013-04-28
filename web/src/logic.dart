@@ -3,10 +3,25 @@ part of ld26_minimalism;
 class TimeIsScoreSystem extends VoidEntitySystem {
   var activeFor = [GAME_WAIT];
   GameState gameState;
+  Position playerPos;
+  num lastX, lastY;
   TimeIsScoreSystem(this.gameState);
 
+  initialize() {
+    TagManager tm = world.getManager(TagManager);
+    playerPos = tm.getEntity(TAG_PLAYER).getComponentByClass(Position);
+    lastX = playerPos.cx;
+    lastY = playerPos.cy;
+  }
+
   processSystem() {
-    gameState.addWaited(world.delta / 1000);
+    if (lastX == playerPos.cx && lastY == playerPos.cy) {
+      gameState.addWaited(world.delta / 1000);
+    } else {
+      gameState.score -= world.delta / 100;
+      lastX = playerPos.cx;
+      lastY = playerPos.cy;
+    }
   }
 
   checkProcessing() => gameState.running && activeFor.contains(gameState.gameId);
