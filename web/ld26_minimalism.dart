@@ -49,6 +49,9 @@ void main() {
     var store = createStore();
 
     Future.wait([audioManager.makeClip('achievement', 'achievement.ogg').load(),
+                 audioManager.makeClip('dodgeballhit', 'dodgeballhit.ogg').load(),
+                 audioManager.makeClip('blockdestroyed', 'blockdestroyed.ogg').load(),
+                 audioManager.makeClip('paddlehit', 'paddlehit.ogg').load(),
                  store.open()]).then((_) {
       new Game(wrapper, audioManager, store).start();
     });

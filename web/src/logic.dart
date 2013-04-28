@@ -154,7 +154,12 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
         } while (isColliding(xDiff, yDiff, ballBody, paddleBody));
 
         ballVel.angle = nextAngle;
-        if (null != dm.getSafe(block)) block.deleteFromWorld();
+        if (null != dm.getSafe(block)) {
+          block.deleteFromWorld();
+          createSound(world, 'blockdestroyed');
+        } else {
+          createSound(world, 'paddlehit');
+        }
       }
     });
     if (ballPos.cx < -200 || ballPos.cy < -200 || ballPos.cx > WIDTH + 200 || ballPos.cy > HEIGHT + 200) {
@@ -278,11 +283,19 @@ class DodgeballScoringSystem extends EntityProcessingSystem {
     if (Utils.doCirclesCollide(ballPos.cx, ballPos.cy, ballBody.radius, playerPos.cx, playerPos.cy, playerBody.radius)) {
       gameState.score -= 10;
       e.deleteFromWorld();
+      createSound(world, 'dodgeballhit');
     } else if (ballPos.cx < -200 || ballPos.cy < -200 || ballPos.cx > WIDTH + 200 || ballPos.cy > HEIGHT + 200) {
       gameState.score += 1;
       e.deleteFromWorld();
     }
   }
 
+
   checkProcessing() => gameState.running && activeFor.contains(gameState.gameId);
+}
+
+void createSound(World world, String name) {
+  var sound = world.createEntity();
+  sound.addComponent(new Sound(name));
+  sound.addToWorld();
 }
