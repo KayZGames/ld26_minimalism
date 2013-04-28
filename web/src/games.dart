@@ -35,7 +35,7 @@ class GameSwitchingSystem extends IntervalEntitySystem {
         entity.disable();
       });
     }
-    currentGame = ++currentGame % gameInitializer.length;
+    currentGame = random.nextInt(gameInitializer.length);
     gameState.gameId = currentGame;
     var nextEntities = gm.getEntities(gameState.getGroup(GROUP_GAME));
     if (!nextEntities.isEmpty) {

@@ -61,7 +61,8 @@ void main() {
 class GameState {
   final maxGames = 2;
   num _score = 0, highScore = 0;
-  num _waited = 0;
+  num _waited = 0, moved = 0;
+  int dodged = 0, notDodged = 0, ponged = 0, pongLost = 0, blocks = 0;
   int achievementCount = 0;
   int gameId = 0;
   bool running = false, hoverStart = false, wrongButton = false,
@@ -82,9 +83,9 @@ class GameState {
     _waited += time;
     score += time;
   }
-  void achievementEarned() {
+  void achievementEarned(int value) {
     achievementCount++;
-    score += 100;
+    score += value;
   }
 }
 

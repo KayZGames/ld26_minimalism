@@ -19,6 +19,7 @@ class TimeIsScoreSystem extends VoidEntitySystem {
       gameState.addWaited(world.delta / 1000);
     } else {
       gameState.score -= world.delta / 100;
+      gameState.moved += world.delta / 100;
       lastX = playerPos.cx;
       lastY = playerPos.cy;
     }
@@ -42,7 +43,7 @@ class AchievementSystem extends VoidEntitySystem {
         e = world.createEntity();
         e.addComponent(new Sound('achievement'));
         e.addToWorld();
-        gameState.achievementEarned();
+        gameState.achievementEarned(achievement['score']);
         matches.add(key);
       }
     });
@@ -172,7 +173,12 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
         if (null != dm.getSafe(block)) {
           block.deleteFromWorld();
           createSound(world, 'blockdestroyed');
+          gameState.blocks++;
         } else {
+          if (paddleBody.width == 100 || paddleBody.height == 100) {
+            gameState.ponged++;
+            gameState.pongLost = 0;
+          }
           createSound(world, 'paddlehit');
         }
       }
@@ -180,6 +186,8 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
     if (ballPos.cx < -200 || ballPos.cy < -200 || ballPos.cx > WIDTH + 200 || ballPos.cy > HEIGHT + 200) {
       gameState.score -= 10;
       e.deleteFromWorld();
+      gameState.ponged = 0;
+      gameState.pongLost++;
     }
   }
 
@@ -299,9 +307,13 @@ class DodgeballScoringSystem extends EntityProcessingSystem {
       gameState.score -= 10;
       e.deleteFromWorld();
       createSound(world, 'dodgeballhit');
+      gameState.dodged = 0;
+      gameState.notDodged++;
     } else if (ballPos.cx < -200 || ballPos.cy < -200 || ballPos.cx > WIDTH + 200 || ballPos.cy > HEIGHT + 200) {
       gameState.score += 1;
       e.deleteFromWorld();
+      gameState.dodged++;
+      gameState.notDodged = 0;
     }
   }
 
