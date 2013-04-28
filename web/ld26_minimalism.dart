@@ -21,7 +21,15 @@ part 'src/storage.dart';
 const WIDTH = 800;
 const HEIGHT = 600;
 
+const GAME_WAIT = 0;
+const GAME_NOT_PONG = 4;
+const GAME_MULTIPONG = 2;
+const GAME_BREAKOUT = 3;
+const GAME_DODGEBALL = 1;
+
 const TAG_PLAYER = 'player';
+const TAG_DODGEBALLPLAYER = 'dodgeballplayer';
+
 const GROUP_PONG_BALL = 'pongball';
 const GROUP_BLOCK = 'block';
 const GROUP_GAME = 'gamegroup';
@@ -110,14 +118,17 @@ class Game {
     world.addSystem(new PlayerFollowingMovementSystem());
     world.addSystem(new MovementSystem());
     world.addSystem(new PongCollisionDetectionSystem(gameState));
+    world.addSystem(new DodgeballScoringSystem(gameState));
     world.addSystem(new BackgroundRenderingSystem(wrapper));
     world.addSystem(new RectangleRenderingSystem(wrapper));
+    world.addSystem(new CircleRenderingSystem(wrapper));
     world.addSystem(new MenuRenderingSystem(wrapper, gameState));
     world.addSystem(new GameStateRenderingSystem(wrapper, gameState));
     world.addSystem(new AchievementRenderingSystem(wrapper, gameState));
     world.addSystem(new SoundSystem(audioManager));
     world.addSystem(new HighScoreSavingSystem(store, gameState));
     world.addSystem(new GameSwitchingSystem(gameState));
+    world.addSystem(new DodgeballSpawningSystem(gameState));
 
     world.initialize();
 

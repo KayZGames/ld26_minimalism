@@ -33,14 +33,20 @@ class RectangleBody extends Component {
   RectangleBody(this.width, this.height);
 }
 
+class CircleBody extends Component {
+  num radius;
+  CircleBody(this.radius);
+}
+
 class Position extends Component {
   num cx, cy;
   Position(this.cx, this.cy);
 }
 
 class PlayerFollower extends Component {
-  num minX, maxX, minY, maxY, maxChangeX, maxChangeY;
-  PlayerFollower(this.minX, this.maxX, this.minY, this.maxY, this.maxChangeX, this.maxChangeY);
+  num minX, maxX, minY, maxY, maxVelocity;
+  bool horizontal, vertical;
+  PlayerFollower(this.minX, this.maxX, this.minY, this.maxY, this.maxVelocity, {this.horizontal: true, this.vertical: true});
 }
 
 class RenderStyle extends Component {

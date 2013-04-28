@@ -1,6 +1,7 @@
 part of ld26_minimalism;
 
 class TimeIsScoreSystem extends VoidEntitySystem {
+  var activeFor = [GAME_WAIT];
   GameState gameState;
   TimeIsScoreSystem(this.gameState);
 
@@ -8,7 +9,7 @@ class TimeIsScoreSystem extends VoidEntitySystem {
     gameState.addWaited(world.delta / 1000);
   }
 
-  checkProcessing() => gameState.running;
+  checkProcessing() => gameState.running && activeFor.contains(gameState.gameId);
 }
 
 class AchievementSystem extends VoidEntitySystem {
@@ -68,12 +69,21 @@ class PlayerFollowingMovementSystem extends EntityProcessingSystem {
   processEntity(Entity e) {
     var pos = pm.get(e);
     var follower = fm.get(e);
-    var targetX = getTarget(playerPos.cx, follower.minX, follower.maxX);
-    var targetY = getTarget(playerPos.cy, follower.minY, follower.maxY);
-    var diffX = targetX - pos.cx;
-    var diffY = targetY - pos.cy;
-    pos.cx += FastMath.signum(diffX) * min(diffX.abs(), follower.maxChangeX * world.delta);
-    pos.cy += FastMath.signum(diffY) * min(diffY.abs(), follower.maxChangeY * world.delta);
+    var diffX = 0;
+    var diffY = 0;
+    if (follower.horizontal) {
+      var targetX = getTarget(playerPos.cx, follower.minX, follower.maxX);
+      diffX = targetX - pos.cx;
+    }
+    if (follower.vertical) {
+      var targetY = getTarget(playerPos.cy, follower.minY, follower.maxY);
+      diffY = targetY - pos.cy;
+    }
+    num angle = atan2(diffY, diffX);
+    var changeX = follower.maxVelocity * cos(angle) * world.delta;
+    var changeY = follower.maxVelocity * sin(angle) * world.delta;
+    pos.cx += FastMath.signum(changeX) * min(changeX.abs(), diffX.abs());
+    pos.cy += FastMath.signum(changeY) * min(changeY.abs(), diffY.abs());
   }
 
   num getTarget(num targetPos, num minPos, num maxPos) {
@@ -132,6 +142,7 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
       var xDiff = ballPos.cx - paddlePos.cx;
       var yDiff = ballPos.cy - paddlePos.cy;
       if (isColliding(xDiff, yDiff, ballBody, paddleBody)) {
+        gameState.score += 1;
         var ballVel = vm.get(e);
         var nextAngle = getNextAngle(ballPos, ballBody, paddlePos, paddleBody, ballVel);
 
@@ -146,6 +157,10 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
         if (null != dm.getSafe(block)) block.deleteFromWorld();
       }
     });
+    if (ballPos.cx < -200 || ballPos.cy < -200 || ballPos.cx > WIDTH + 200 || ballPos.cy > HEIGHT + 200) {
+      gameState.score -= 10;
+      e.deleteFromWorld();
+    }
   }
 
   num getNextAngle(Position ballPos, RectangleBody ballBody, Position paddlePos, RectangleBody paddleBody, Velocity ballVel) {
@@ -187,4 +202,87 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
     }
     return false;
   }
+}
+
+class DodgeballSpawningSystem extends IntervalEntitySystem {
+  var activeFor = [GAME_DODGEBALL];
+  Position playerPos;
+  GameState gameState;
+  GroupManager gm;
+  DodgeballSpawningSystem(this.gameState) : super(900, Aspect.getEmpty());
+
+  initialize() {
+    gm = world.getManager(GroupManager);
+    TagManager tm = world.getManager(TagManager);
+    playerPos = tm.getEntity(TAG_PLAYER).getComponentByClass(Position);
+  }
+
+  processEntities(_) {
+    var x, y;
+    if (random.nextBool()) {
+      x = random.nextInt(WIDTH);
+      if (random.nextBool()) {
+        y = - 100;
+      } else {
+        y = HEIGHT + 100;
+      }
+    } else if (random.nextBool()) {
+      x = - 100;
+      y = random.nextInt(HEIGHT);
+    } else {
+      x = WIDTH + 100;
+      y = random.nextInt(HEIGHT);
+    }
+    num targetX = max(min(playerPos.cx, WIDTH - 100), 100);
+    num targetY = max(min(playerPos.cy, HEIGHT - 100), 100);
+    num angle = atan2(targetY - y, targetX - x);
+    var e = world.createEntity();
+
+    e.addComponent(new Position(x, y));
+    e.addComponent(new Velocity(0.5, -angle));
+    e.addComponent(new CircleBody(10));
+    e.addComponent(new RenderStyle(fillStyle: '#d34549'));
+    e.addToWorld();
+    gm.add(e, gameState.getGroup(GROUP_PONG_BALL));
+    gm.add(e, gameState.getGroup(GROUP_GAME));
+  }
+
+  checkProcessing() => gameState.running && activeFor.contains(gameState.gameId)  && super.checkProcessing();
+}
+
+class DodgeballScoringSystem extends EntityProcessingSystem {
+  var activeFor = [GAME_DODGEBALL];
+  TagManager tm;
+  ComponentMapper<Position> pm;
+  ComponentMapper<Velocity> vm;
+  ComponentMapper<CircleBody> bm;
+  ComponentMapper<Destroyable> dm;
+  GameState gameState;
+
+  DodgeballScoringSystem(this.gameState) : super(Aspect.getAspectForAllOf([Position, CircleBody, Velocity]).exclude([PlayerFollower]));
+
+  initialize() {
+    tm = world.getManager(TagManager);
+    vm = new ComponentMapper<Velocity>(Velocity, world);
+    pm = new ComponentMapper<Position>(Position, world);
+    bm = new ComponentMapper<CircleBody>(CircleBody, world);
+    dm = new ComponentMapper<Destroyable>(Destroyable, world);
+  }
+
+  processEntity(Entity e) {
+    var ballPos = pm.get(e);
+    var ballBody = bm.get(e);
+    var player = tm.getEntity(TAG_DODGEBALLPLAYER);
+    var playerPos = pm.get(player);
+    var playerBody = bm.get(player);
+    if (Utils.doCirclesCollide(ballPos.cx, ballPos.cy, ballBody.radius, playerPos.cx, playerPos.cy, playerBody.radius)) {
+      gameState.score -= 10;
+      e.deleteFromWorld();
+    } else if (ballPos.cx < -200 || ballPos.cy < -200 || ballPos.cx > WIDTH + 200 || ballPos.cy > HEIGHT + 200) {
+      gameState.score += 1;
+      e.deleteFromWorld();
+    }
+  }
+
+  checkProcessing() => gameState.running && activeFor.contains(gameState.gameId);
 }

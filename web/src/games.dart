@@ -2,19 +2,22 @@ part of ld26_minimalism;
 
 typedef void GameInitializer();
 class GameSwitchingSystem extends IntervalEntitySystem {
-  List<GameInitializer> gameInitializer = new List<GameInitializer>(4);
+  List<GameInitializer> gameInitializer = new List<GameInitializer>(5);
   List<String> blockColors = ['#d34549', '#d3aa9a', '#6dc3cb', '#d37d2c', '#6daa2c', '#346524', '#dbd75d', '#dfefd7'];
   GroupManager gm;
+  TagManager tm;
   GameState gameState;
   int currentGame = 0;
   GameSwitchingSystem(this.gameState) : super(20000, Aspect.getEmpty());
 
   initialize() {
-    gameInitializer[0] = initWaitGame;
-    gameInitializer[3] = initPong;
-    gameInitializer[2] = initMultiPong;
-    gameInitializer[1] = initBreakout;
+    gameInitializer[GAME_WAIT] = initWaitGame;
+    gameInitializer[GAME_NOT_PONG] = initNotPong;
+    gameInitializer[GAME_MULTIPONG] = initMultiPong;
+    gameInitializer[GAME_BREAKOUT] = initBreakout;
+    gameInitializer[GAME_DODGEBALL] = initDodgeball;
     gm = world.getManager(GroupManager);
+    tm = world.getManager(TagManager);
   }
 
   processEntities(_) {
@@ -42,7 +45,7 @@ class GameSwitchingSystem extends IntervalEntitySystem {
     // wait
   }
 
-  void initPong() {
+  void initNotPong() {
     createPongBall(PI/4 + random.nextDouble() * PI/2);
     createPaddle(WIDTH~/2, HEIGHT - 100,  100, 20);
     createPaddle(WIDTH~/2, 100,  WIDTH - 220, 20);
@@ -51,7 +54,6 @@ class GameSwitchingSystem extends IntervalEntitySystem {
   }
 
   void initMultiPong() {
-    GroupManager gm = world.getManager(GroupManager);
     createPongBall(PI/4 + random.nextDouble() * PI/2);
     createPaddle(WIDTH~/2, HEIGHT - 100,  100, 20);
     createPaddle(WIDTH~/2, 100,  100, 20);
@@ -60,13 +62,27 @@ class GameSwitchingSystem extends IntervalEntitySystem {
   }
 
   void initBreakout() {
-    GroupManager gm = world.getManager(GroupManager);
     createPongBall(PI/4 + random.nextDouble() * PI/2);
     createPaddle(WIDTH~/2, HEIGHT - 100,  100, 20);
     createPaddle(WIDTH~/2, 100,  WIDTH - 220, 20);
     createPaddle(100, HEIGHT ~/ 2,  20, HEIGHT - 220);
     createPaddle(WIDTH - 100, HEIGHT ~/ 2,  20, HEIGHT - 220);
     createBreakoutBlocks();
+  }
+
+  void initDodgeball() {
+    createDodgeballPlayer();
+  }
+
+  void createDodgeballPlayer() {
+    var e = world.createEntity();
+    e.addComponent(new Position(WIDTH~/2, HEIGHT~/2));
+    e.addComponent(new CircleBody(25));
+    e.addComponent(new RenderStyle(fillStyle: '#d37d2c'));
+    e.addComponent(new PlayerFollower(100, WIDTH - 100, 100, HEIGHT - 100, 0.5));
+    e.addToWorld();
+    tm.register(e, TAG_DODGEBALLPLAYER);
+    gm.add(e, gameState.getGroup(GROUP_GAME));
   }
 
   void createPongBall(num angle) {
@@ -89,8 +105,9 @@ class GameSwitchingSystem extends IntervalEntitySystem {
                                       WIDTH - (100 + height~/2 + width~/2),
                                       100 + height~/2 + width~/2,
                                       HEIGHT - (100 + height~/2 + width~/2),
-                                      width > height ? 0.3 : 0,
-                                      height > width ? 0.3 : 0));
+                                      0.3,
+                                      horizontal: width > height ? true : false,
+                                      vertical: height > width ? true : false));
     e.addToWorld();
     gm.add(e, gameState.getGroup(GROUP_BLOCK));
     gm.add(e, gameState.getGroup(GROUP_GAME));

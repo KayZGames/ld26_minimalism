@@ -205,3 +205,24 @@ class RectangleRenderingSystem extends EntityProcessingSystem {
   end() => wrapper.restore();
 }
 
+class CircleRenderingSystem extends EntityProcessingSystem {
+  ComponentMapper<CircleBody> bm;
+  ComponentMapper<Position> pm;
+  ComponentMapper<RenderStyle> sm;
+  CqWrapper wrapper;
+  CircleRenderingSystem(this.wrapper) : super(Aspect.getAspectForAllOf([CircleBody, Position, RenderStyle]));
+
+  initialize() {
+    bm = new ComponentMapper<CircleBody>(CircleBody, world);
+    pm = new ComponentMapper<Position>(Position, world);
+    sm = new ComponentMapper<RenderStyle>(RenderStyle, world);
+  }
+
+  processEntity(Entity e) {
+    var pos = pm.get(e);
+    var body = bm.get(e);
+    var style = sm.get(e);
+
+    wrapper.circle(pos.cx, pos.cy, body.radius, strokeStyle: style.strokeStyle, fillStyle: style.fillStyle);
+  }
+}
