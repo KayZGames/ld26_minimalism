@@ -1,8 +1,10 @@
 part of ld26_minimalism;
 
 typedef void GameInitializer();
+typedef void GameReset();
 class GameSwitchingSystem extends IntervalEntitySystem {
   List<GameInitializer> gameInitializer = new List<GameInitializer>(5);
+  List<GameReset> gameReset = new List<GameReset>(5);
   List<String> blockColors = ['#d34549', '#d3aa9a', '#6dc3cb', '#d37d2c', '#6daa2c', '#346524', '#dbd75d', '#dfefd7'];
   GroupManager gm;
   TagManager tm;
@@ -11,11 +13,17 @@ class GameSwitchingSystem extends IntervalEntitySystem {
   GameSwitchingSystem(this.gameState) : super(20000, Aspect.getEmpty());
 
   initialize() {
-    gameInitializer[GAME_WAIT] = initWaitGame;
+    gameInitializer[GAME_WAIT] = noop;
     gameInitializer[GAME_NOT_PONG] = initNotPong;
     gameInitializer[GAME_MULTIPONG] = initMultiPong;
     gameInitializer[GAME_BREAKOUT] = initBreakout;
     gameInitializer[GAME_DODGEBALL] = initDodgeball;
+
+    gameReset[GAME_WAIT] = noop;
+    gameReset[GAME_NOT_PONG] = resetPongBall;
+    gameReset[GAME_MULTIPONG] = resetPongBall;
+    gameReset[GAME_BREAKOUT] = resetBreakout;
+    gameReset[GAME_DODGEBALL] = noop;
     gm = world.getManager(GroupManager);
     tm = world.getManager(TagManager);
   }
@@ -34,6 +42,7 @@ class GameSwitchingSystem extends IntervalEntitySystem {
       nextEntities.forEach((entity) {
         entity.enable();
       });
+      gameReset[currentGame]();
     } else {
       gameInitializer[currentGame]();
     }
@@ -41,7 +50,7 @@ class GameSwitchingSystem extends IntervalEntitySystem {
 
   checkProcessing() => gameState.running && super.checkProcessing();
 
-  void initWaitGame() {
+  void noop() {
     // wait
   }
 
@@ -51,6 +60,19 @@ class GameSwitchingSystem extends IntervalEntitySystem {
     createPaddle(WIDTH~/2, 100,  WIDTH - 220, 20);
     createPaddle(100, HEIGHT ~/ 2,  20, HEIGHT - 220);
     createPaddle(WIDTH - 100, HEIGHT ~/ 2,  20, HEIGHT - 220);
+  }
+
+  void resetPongBall() {
+    if (gm.getEntities(gameState.getGroup(GROUP_PONG_BALL)).isEmpty) {
+      createPongBall(PI/4 + random.nextDouble() * PI/2);
+    }
+  }
+
+  void resetBreakout() {
+    resetPongBall();
+    if (gm.getEntities(gameState.getGroup(GROUP_BLOCK)).isEmpty) {
+      createBreakoutBlocks();
+    }
   }
 
   void initMultiPong() {
@@ -105,7 +127,7 @@ class GameSwitchingSystem extends IntervalEntitySystem {
                                       WIDTH - (100 + height~/2 + width~/2),
                                       100 + height~/2 + width~/2,
                                       HEIGHT - (100 + height~/2 + width~/2),
-                                      0.3,
+                                      0.5,
                                       horizontal: width > height ? true : false,
                                       vertical: height > width ? true : false));
     e.addToWorld();
