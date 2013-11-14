@@ -1,71 +1,71 @@
 part of ld26_minimalism;
 
 class BackgroundRenderingSystem extends VoidEntitySystem {
-  CqWrapper wrapper;
+  CanvasQuery cq;
 
-  BackgroundRenderingSystem(this.wrapper);
+  BackgroundRenderingSystem(this.cq);
 
   processSystem() {
-    wrapper.clear(color: '#dfefd7');
+    cq.clear(color: '#dfefd7');
   }
 
-  begin() => wrapper.save();
-  end() => wrapper.restore();
+  begin() => cq.save();
+  end() => cq.restore();
 }
 
 class GameStateRenderingSystem extends VoidEntitySystem {
-  const LABEL_SCORE = 'Score: ';
-  const LABEL_HIGHSCORE = 'Highscore: ';
-  const LABEL_ACHIEVEMENTS = 'Achievements: ';
-  const LABEL_COUNTDOWN = 'Countdown: ';
-  Rect scoreLabelBounds, achievementsLabelBounds, highScoreLabelBounds, countdownLabelBounds;
+  static const LABEL_SCORE = 'Score: ';
+  static const LABEL_HIGHSCORE = 'Highscore: ';
+  static const LABEL_ACHIEVEMENTS = 'Achievements: ';
+  static const LABEL_COUNTDOWN = 'Countdown: ';
+  Rectangle scoreLabelBounds, achievementsLabelBounds, highScoreLabelBounds, countdownLabelBounds;
   num scoreY, achievementsY, countdownY;
-  CqWrapper wrapper;
+  CanvasQuery cq;
   GameState gameState;
-  GameStateRenderingSystem(this.wrapper, this.gameState);
+  GameStateRenderingSystem(this.cq, this.gameState);
 
   initialize() {
-    scoreLabelBounds = wrapper.textBoundaries(LABEL_SCORE);
-    achievementsLabelBounds = wrapper.textBoundaries(LABEL_ACHIEVEMENTS);
-    highScoreLabelBounds = wrapper.textBoundaries(LABEL_HIGHSCORE);
-    countdownLabelBounds = wrapper.textBoundaries(LABEL_COUNTDOWN);
+    scoreLabelBounds = cq.textBoundaries(LABEL_SCORE);
+    achievementsLabelBounds = cq.textBoundaries(LABEL_ACHIEVEMENTS);
+    highScoreLabelBounds = cq.textBoundaries(LABEL_HIGHSCORE);
+    countdownLabelBounds = cq.textBoundaries(LABEL_COUNTDOWN);
     scoreY = HEIGHT - scoreLabelBounds.height;
     achievementsY = scoreY - achievementsLabelBounds.height;
     countdownY = achievementsY - countdownLabelBounds.height;
   }
 
   processSystem() {
-    wrapper.fillText(LABEL_SCORE, WIDTH - 150 - scoreLabelBounds.width, scoreY);
-    wrapper.fillText(LABEL_ACHIEVEMENTS, WIDTH - 150 - achievementsLabelBounds.width, achievementsY);
-    wrapper.fillText(LABEL_COUNTDOWN, WIDTH - 150 - countdownLabelBounds.width, countdownY);
-    wrapper.fillText(LABEL_HIGHSCORE, WIDTH - 150 - highScoreLabelBounds.width, 0);
+    cq.fillText(LABEL_SCORE, WIDTH - 150 - scoreLabelBounds.width, scoreY);
+    cq.fillText(LABEL_ACHIEVEMENTS, WIDTH - 150 - achievementsLabelBounds.width, achievementsY);
+    cq.fillText(LABEL_COUNTDOWN, WIDTH - 150 - countdownLabelBounds.width, countdownY);
+    cq.fillText(LABEL_HIGHSCORE, WIDTH - 150 - highScoreLabelBounds.width, 0);
     var text = gameState.score.toStringAsFixed(3);
-    var textBounds = wrapper.textBoundaries(text);
-    wrapper.fillText(text, WIDTH - textBounds.width, scoreY);
+    var textBounds = cq.textBoundaries(text);
+    cq.fillText(text, WIDTH - textBounds.width, scoreY);
 
     text = gameState.achievementCount.toString();
-    textBounds = wrapper.textBoundaries(text);
-    wrapper.fillText(text, WIDTH - textBounds.width, achievementsY);
+    textBounds = cq.textBoundaries(text);
+    cq.fillText(text, WIDTH - textBounds.width, achievementsY);
 
     text = gameState.countdown.toString();
-    textBounds = wrapper.textBoundaries(text);
-    wrapper.fillText(text, WIDTH - textBounds.width, countdownY);
+    textBounds = cq.textBoundaries(text);
+    cq.fillText(text, WIDTH - textBounds.width, countdownY);
 
     text = gameState.highScore.toStringAsFixed(3);
-    textBounds = wrapper.textBoundaries(text);
-    wrapper.fillText(text, WIDTH - textBounds.width, 0);
+    textBounds = cq.textBoundaries(text);
+    cq.fillText(text, WIDTH - textBounds.width, 0);
   }
 
   checkProcessing() => gameState.running;
-  begin() => wrapper.save();
-  end() => wrapper.restore();
+  begin() => cq.save();
+  end() => cq.restore();
 }
 
 class AchievementRenderingSystem extends EntitySystem {
-  const int ACHIEVEMENT_WIDTH = 200;
-  CqWrapper wrapper;
-  CqWrapper labelLayer;
-  CqWrapper descLayer;
+  static const int ACHIEVEMENT_WIDTH = 200;
+  CanvasQuery wrapper;
+  CanvasQuery labelLayer;
+  CanvasQuery descLayer;
   GameState gameState;
   bool isFirst;
   ComponentMapper<Achievement> am;
@@ -140,9 +140,9 @@ class AchievementRenderingSystem extends EntitySystem {
 
 class MenuRenderingSystem extends EntityProcessingSystem {
   ComponentMapper<MenuItem> mm;
-  CqWrapper wrapper;
+  CanvasQuery cq;
   GameState gameState;
-  MenuRenderingSystem(this.wrapper, this.gameState) : super(Aspect.getAspectForAllOf([MenuItem]));
+  MenuRenderingSystem(this.cq, this.gameState) : super(Aspect.getAspectForAllOf([MenuItem]));
 
   initialize() {
     mm = new ComponentMapper<MenuItem>(MenuItem, world);
@@ -150,7 +150,7 @@ class MenuRenderingSystem extends EntityProcessingSystem {
 
   processEntity(Entity e) {
     var m = mm.get(e);
-    var bounds = wrapper.textBoundaries(m.label);
+    var bounds = cq.textBoundaries(m.label);
     var fillStyle, strokeStyle, textColor;
     if (m.hover) {
       fillStyle = '#d37d2c';
@@ -161,14 +161,14 @@ class MenuRenderingSystem extends EntityProcessingSystem {
       strokeStyle = '#346524';
       textColor = '#dbd75d';
     }
-    wrapper..roundRect(m.x, m.y, m.width, m.height, 20, strokeStyle: strokeStyle, fillStyle: fillStyle)
+    cq..roundRect(m.x, m.y, m.width, m.height, 20, strokeStyle: strokeStyle, fillStyle: fillStyle)
            ..fillStyle = textColor
            ..fillText(m.label, m.x + m.width / 2 - bounds.width / 2,
                                m.y + m.height / 2 - bounds.height / 2);
   }
 
   begin() {
-    wrapper..save()
+    cq..save()
            ..clear(color: '#dfefd7')
            ..lineWidth = 5
            ..roundRect(20, 20, WIDTH - 40, HEIGHT - 40, 20, strokeStyle: '#346524', fillStyle: '#30346d');
@@ -176,7 +176,7 @@ class MenuRenderingSystem extends EntityProcessingSystem {
   }
 
   end() {
-    wrapper.restore();
+    cq.restore();
   }
 
   checkProcessing() => !gameState.running;
@@ -186,8 +186,8 @@ class RectangleRenderingSystem extends EntityProcessingSystem {
   ComponentMapper<RectangleBody> rbm;
   ComponentMapper<Position> pm;
   ComponentMapper<RenderStyle> sm;
-  CqWrapper wrapper;
-  RectangleRenderingSystem(this.wrapper) : super(Aspect.getAspectForAllOf([RectangleBody, Position, RenderStyle]));
+  CanvasQuery cq;
+  RectangleRenderingSystem(this.cq) : super(Aspect.getAspectForAllOf([RectangleBody, Position, RenderStyle]));
 
   initialize() {
     rbm = new ComponentMapper<RectangleBody>(RectangleBody, world);
@@ -200,7 +200,7 @@ class RectangleRenderingSystem extends EntityProcessingSystem {
     var body = rbm.get(e);
     var style = sm.get(e);
 
-    wrapper..strokeStyle = style.strokeStyle
+    cq..strokeStyle = style.strokeStyle
         ..fillStyle = style.fillStyle
         ..beginPath()
         ..rect(pos.cx - body.width/2, pos.cy - body.height/2, body.width, body.height)
@@ -209,16 +209,16 @@ class RectangleRenderingSystem extends EntityProcessingSystem {
         ..stroke();
   }
 
-  begin() => wrapper.save();
-  end() => wrapper.restore();
+  begin() => cq.save();
+  end() => cq.restore();
 }
 
 class CircleRenderingSystem extends EntityProcessingSystem {
   ComponentMapper<CircleBody> bm;
   ComponentMapper<Position> pm;
   ComponentMapper<RenderStyle> sm;
-  CqWrapper wrapper;
-  CircleRenderingSystem(this.wrapper) : super(Aspect.getAspectForAllOf([CircleBody, Position, RenderStyle]));
+  CanvasQuery cq;
+  CircleRenderingSystem(this.cq) : super(Aspect.getAspectForAllOf([CircleBody, Position, RenderStyle]));
 
   initialize() {
     bm = new ComponentMapper<CircleBody>(CircleBody, world);
@@ -231,6 +231,6 @@ class CircleRenderingSystem extends EntityProcessingSystem {
     var body = bm.get(e);
     var style = sm.get(e);
 
-    wrapper.circle(pos.cx, pos.cy, body.radius, strokeStyle: style.strokeStyle, fillStyle: style.fillStyle);
+    cq.circle(pos.cx, pos.cy, body.radius, strokeStyle: style.strokeStyle, fillStyle: style.fillStyle);
   }
 }

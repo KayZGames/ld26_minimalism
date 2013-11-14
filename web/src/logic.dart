@@ -53,7 +53,8 @@ class AchievementSystem extends VoidEntitySystem {
 
 class ExpirationSystem extends EntityProcessingSystem {
   ComponentMapper<ExpirationTimer> tm;
-  ExpirationSystem() : super(Aspect.getAspectForAllOf([ExpirationTimer]));
+  GameState gameState;
+  ExpirationSystem(this.gameState) : super(Aspect.getAspectForAllOf([ExpirationTimer]));
 
   initialize() {
     tm = new ComponentMapper<ExpirationTimer>(ExpirationTimer, world);
@@ -67,13 +68,16 @@ class ExpirationSystem extends EntityProcessingSystem {
       timer.current -= world.delta;
     }
   }
+
+  checkProcessing() => gameState.running && super.checkProcessing();
 }
 
 class PlayerFollowingMovementSystem extends EntityProcessingSystem {
   Position playerPos;
   ComponentMapper<Position> pm;
   ComponentMapper<PlayerFollower> fm;
-  PlayerFollowingMovementSystem() : super(Aspect.getAspectForAllOf([Position, PlayerFollower]));
+  GameState gameState;
+  PlayerFollowingMovementSystem(this.gameState) : super(Aspect.getAspectForAllOf([Position, PlayerFollower]));
 
   initialize() {
     TagManager tm = world.getManager(TagManager);
@@ -110,12 +114,15 @@ class PlayerFollowingMovementSystem extends EntityProcessingSystem {
     }
     return targetPos;
   }
+
+  checkProcessing() => gameState.running && super.checkProcessing();
 }
 
 class MovementSystem extends EntityProcessingSystem {
   ComponentMapper<Position> pm;
   ComponentMapper<Velocity> vm;
-  MovementSystem() : super(Aspect.getAspectForAllOf([Position, Velocity]));
+  GameState gameState;
+  MovementSystem(this.gameState) : super(Aspect.getAspectForAllOf([Position, Velocity]));
 
   initialize() {
     vm = new ComponentMapper<Velocity>(Velocity, world);
@@ -128,6 +135,8 @@ class MovementSystem extends EntityProcessingSystem {
     p.cx += v.amount * cos(v.angle) * world.delta;
     p.cy += v.amount * sin(-v.angle) * world.delta;
   }
+
+  checkProcessing() => gameState.running && super.checkProcessing();
 }
 
 class PongCollisionDetectionSystem extends EntityProcessingSystem {
@@ -217,11 +226,11 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
     return nextAngle;
   }
 
-  Rect getRect(Position pos, RectangleBody body) {
-    return new Rect(pos.cx - body.width/2, pos.cy - body.height/2, body.width, body.height);
+  Rectangle getRect(Position pos, RectangleBody body) {
+    return new Rectangle(pos.cx - body.width/2, pos.cy - body.height/2, body.width, body.height);
   }
 
-  bool isLeftOrRight(Rect intersection) {
+  bool isLeftOrRight(Rectangle intersection) {
     if (intersection.width < intersection.height) {
       return true;
     }
@@ -235,6 +244,8 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
     }
     return false;
   }
+
+  checkProcessing() => gameState.running && super.checkProcessing();
 }
 
 class DodgeballSpawningSystem extends IntervalEntitySystem {

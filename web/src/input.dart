@@ -2,7 +2,7 @@ part of ld26_minimalism;
 
 class MenuMouseInputSystem extends EntityProcessingSystem {
   ComponentMapper<MenuItem> mm;
-  CqWrapper wrapper;
+  CanvasQuery wrapper;
   GameState gameState;
   Point mousePos;
   int button;
@@ -40,7 +40,7 @@ class MenuMouseInputSystem extends EntityProcessingSystem {
 }
 
 class MouseMovementSystem extends VoidEntitySystem {
-  CqWrapper wrapper;
+  CanvasQuery wrapper;
   Point mousePos;
   Position pos;
 

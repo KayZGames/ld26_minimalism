@@ -36,15 +36,19 @@ class GameSwitchingSystem extends IntervalEntitySystem {
       });
     }
     currentGame = random.nextInt(gameInitializer.length);
-    gameState.gameId = currentGame;
+    startGame(currentGame);
+  }
+
+  void startGame(num gameId) {
+    gameState.gameId = gameId;
     var nextEntities = gm.getEntities(gameState.getGroup(GROUP_GAME));
     if (!nextEntities.isEmpty) {
       nextEntities.forEach((entity) {
         entity.enable();
       });
-      gameReset[currentGame]();
+      gameReset[gameId]();
     } else {
-      gameInitializer[currentGame]();
+      gameInitializer[gameId]();
     }
   }
 
@@ -77,7 +81,7 @@ class GameSwitchingSystem extends IntervalEntitySystem {
 
   void resetBreakout() {
     resetPongBall();
-    if (gm.getEntities(gameState.getGroup(GROUP_BLOCK)).isEmpty) {
+    if (gm.getEntities(gameState.getGroup(GROUP_DESTROYABLE_BLOCK)).isEmpty) {
       createBreakoutBlocks();
     }
   }
@@ -157,6 +161,7 @@ class GameSwitchingSystem extends IntervalEntitySystem {
         e.addToWorld();
         gm.add(e, gameState.getGroup(GROUP_BLOCK));
         gm.add(e, gameState.getGroup(GROUP_GAME));
+        gm.add(e, gameState.getGroup(GROUP_DESTROYABLE_BLOCK));
       }
     }
   }

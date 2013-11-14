@@ -14,7 +14,7 @@ Store createStore() {
 }
 
 class HighScoreSavingSystem extends IntervalEntitySystem {
-  const KEY = 'highScore';
+  static const KEY = 'highScore';
   Store<num> store;
   GameState gameState;
   HighScoreSavingSystem(this.store, this.gameState) : super(30000, Aspect.getEmpty());

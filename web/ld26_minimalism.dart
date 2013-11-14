@@ -32,29 +32,28 @@ const TAG_DODGEBALLPLAYER = 'dodgeballplayer';
 
 const GROUP_PONG_BALL = 'pongball';
 const GROUP_BLOCK = 'block';
+const GROUP_DESTROYABLE_BLOCK = 'destroyableblock';
 const GROUP_GAME = 'gamegroup';
 
 Random random = new Random();
 
 void main() {
-  window.setImmediate(() {
-    var wrapper = cq('#gameCanvas');
-    wrapper..canvas.height = HEIGHT
-           ..canvas.width = WIDTH
-           ..textBaseline = 'top'
-           ..font = '20px Verdana'
-           ..fillStyle = '#140c1c';
+  var wrapper = cq('#gameCanvas');
+  wrapper..canvas.height = HEIGHT
+         ..canvas.width = WIDTH
+         ..textBaseline = 'top'
+         ..font = '20px Verdana'
+         ..fillStyle = '#140c1c';
 
-    var audioManager = createAudioManager();
-    var store = createStore();
+  var audioManager = createAudioManager();
+  var store = createStore();
 
-    Future.wait([audioManager.makeClip('achievement', 'achievement.ogg').load(),
-                 audioManager.makeClip('dodgeballhit', 'dodgeballhit.ogg').load(),
-                 audioManager.makeClip('blockdestroyed', 'blockdestroyed.ogg').load(),
-                 audioManager.makeClip('paddlehit', 'paddlehit.ogg').load(),
-                 store.open()]).then((_) {
-      new Game(wrapper, audioManager, store).start();
-    });
+  Future.wait([audioManager.makeClip('achievement', 'achievement.ogg').load(),
+               audioManager.makeClip('dodgeballhit', 'dodgeballhit.ogg').load(),
+               audioManager.makeClip('blockdestroyed', 'blockdestroyed.ogg').load(),
+               audioManager.makeClip('paddlehit', 'paddlehit.ogg').load(),
+               store.open()]).then((_) {
+    new Game(wrapper, audioManager, store).start();
   });
 }
 
@@ -93,11 +92,11 @@ class Game {
   GameState gameState = new GameState();
   World world = new World();
   num lastTime;
-  CqWrapper wrapper;
+  CanvasQuery cq;
   AudioManager audioManager;
   Store store;
 
-  Game(this.wrapper, this.audioManager, this.store);
+  Game(this.cq, this.audioManager, this.store);
 
   void start() {
     var tm = new TagManager();
@@ -114,27 +113,30 @@ class Game {
     e.addToWorld();
     tm.register(e, TAG_PLAYER);
 
-    world.addSystem(new MenuMouseInputSystem(wrapper, gameState));
-    world.addSystem(new MouseMovementSystem(wrapper));
+    world.addSystem(new MenuMouseInputSystem(cq, gameState));
+    world.addSystem(new MouseMovementSystem(cq));
     world.addSystem(new TimeIsScoreSystem(gameState));
     world.addSystem(new AchievementSystem(gameState));
-    world.addSystem(new ExpirationSystem());
-    world.addSystem(new PlayerFollowingMovementSystem());
-    world.addSystem(new MovementSystem());
+    world.addSystem(new ExpirationSystem(gameState));
+    world.addSystem(new PlayerFollowingMovementSystem(gameState));
+    world.addSystem(new MovementSystem(gameState));
     world.addSystem(new PongCollisionDetectionSystem(gameState));
     world.addSystem(new DodgeballScoringSystem(gameState));
-    world.addSystem(new BackgroundRenderingSystem(wrapper));
-    world.addSystem(new RectangleRenderingSystem(wrapper));
-    world.addSystem(new CircleRenderingSystem(wrapper));
-    world.addSystem(new MenuRenderingSystem(wrapper, gameState));
-    world.addSystem(new GameStateRenderingSystem(wrapper, gameState));
-    world.addSystem(new AchievementRenderingSystem(wrapper, gameState));
+    world.addSystem(new BackgroundRenderingSystem(cq));
+    world.addSystem(new RectangleRenderingSystem(cq));
+    world.addSystem(new CircleRenderingSystem(cq));
+    world.addSystem(new MenuRenderingSystem(cq, gameState));
+    world.addSystem(new GameStateRenderingSystem(cq, gameState));
+    world.addSystem(new AchievementRenderingSystem(cq, gameState));
     world.addSystem(new SoundSystem(audioManager));
     world.addSystem(new HighScoreSavingSystem(store, gameState));
     world.addSystem(new GameSwitchingSystem(gameState));
     world.addSystem(new DodgeballSpawningSystem(gameState));
 
     world.initialize();
+
+    GameSwitchingSystem gss = world.getSystem(GameSwitchingSystem);
+    gss.startGame(GAME_BREAKOUT);
 
     window.animationFrame.then((time) {
       lastTime = time;

@@ -7,5 +7,5 @@ dependencies:
   canvas_query: any
   lawndart: any
   simple_audio:
-    git: git://github.com/johnmccutchan/simpleaudio.git
+    git: https://github.com/johnmccutchan/simpleaudio.git
 
