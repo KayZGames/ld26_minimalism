@@ -265,7 +265,9 @@ class CircleRenderingSystem extends EntityProcessingSystem {
       ..save()
       ..fillStyle = style.fillStyle
       ..strokeStyle = style.strokeStyle
+      ..beginPath()
       ..arc(pos.cx, pos.cy, body.radius, 0, 2 * PI)
+      ..closePath()
       ..stroke()
       ..fill()
       ..restore();

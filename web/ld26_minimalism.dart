@@ -44,7 +44,7 @@ void main() {
          ..font = '20px Verdana'
          ..fillStyle = '#140c1c';
 
-  var audioManager = createAudioManager();
+  var audioManager = createAudioManager('ld26_minimalism');
 
   Future.wait([audioManager.makeClip('achievement', 'achievement.ogg').load(),
                audioManager.makeClip('dodgeballhit', 'dodgeballhit.ogg').load(),

@@ -15,10 +15,9 @@ class SoundSystem extends EntityProcessingSystem {
     e.deleteFromWorld();
   }
 }
-
-AudioManager createAudioManager() {
-  int webIndex = window.location.href.lastIndexOf('/web/');
-  var baseUrl = window.location.href.substring(0, webIndex) + '/res/sfx/';
+/// Expects sound assets in /asset/sfx
+AudioManager createAudioManager(String appName) {
+  var baseUrl = 'packages/$appName/assets/sfx';
   var manager;
   try {
     manager = new AudioManager(baseUrl);
