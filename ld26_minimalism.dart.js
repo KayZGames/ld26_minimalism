@@ -509,7 +509,7 @@ if(c>b.length)throw H.b(P.ve(c,0,b.length,null,null))
 return H.ZT(a,b,c)},
 dd:function(a,b){return this.ww(a,b,0)},
 wL:function(a,b,c){var z,y
-if(c<0||c>b.length)throw H.b(P.ve(c,0,b.length,null,null))
+if(c>b.length)throw H.b(P.ve(c,0,b.length,null,null))
 z=a.length
 if(c+z>b.length)return
 for(y=0;y<z;++y)if(this.O2(b,c+y)!==this.O2(a,y))return
@@ -566,13 +566,6 @@ for(z=a,y="";!0;){if((b&1)===1)y=z+y
 b=b>>>1
 if(b===0)break
 z+=z}return y},
-Pk:function(a,b,c){var z,y
-c=a.length
-z=b.length
-y=a.length
-if(c+z>y)c=y-z
-return a.lastIndexOf(b,c)},
-cn:function(a,b){return this.Pk(a,b,null)},
 gl0:function(a){return a.length===0},
 Z:function(a){return a},
 giO:function(a){var z,y,x
@@ -4461,10 +4454,6 @@ Og:{
 "^":"qE;",
 Ne:function(a,b){return a.disabled.$1(b)},
 "%":"HTMLLinkElement"},
-cS:{
-"^":"Gv;",
-Z:function(a){return String(a)},
-"%":"Location"},
 N2:{
 "^":"PZ;zo:duration=",
 bY:function(a){return a.play()},
@@ -6311,7 +6300,7 @@ y=z.getContext("2d")
 y.textBaseline="top"
 y.font="20px Verdana"
 y.fillStyle="#140c1c"
-x=V.V()
+x=V.V("ld26_minimalism")
 P.Q([J.xW$x(x.BY("achievement","achievement.ogg")),J.xW$x(x.BY("dodgeballhit","dodgeballhit.ogg")),J.xW$x(x.BY("blockdestroyed","blockdestroyed.ogg")),J.xW$x(x.BY("paddlehit","paddlehit.ogg")),X.P("ld26","gameState",null)],null,!1).ml(new V.O(z,x))},"$0","Ii",0,0,2],
 o9:function(a,b){var z=a.NM()
 z.px(new V.Me(b))
@@ -6352,29 +6341,28 @@ if(v>=y.length)return H.e(y,v)
 y[v]=r
 w+=s}}else y=[b]
 return y},
-V:function(){var z,y,x,w,v,u,t,s,r,q
-w=J.cn$asx(window.location.href,"/web/")
-z=J.Nj$s(window.location.href,0,w)+"/res/sfx/"
+V:function(a){var z,y,x,w,v,u,t,s,r
+z="packages/"+a+"/assets/sfx"
 y=null
-try{v=new Q.OR(null,null,null,null,null,null,z,P.L5(null,null,null,P.K,Q.i0),P.L5(null,null,null,P.K,Q.JM),null,null,!1,!1)
-u=new (window.AudioContext||window.webkitAudioContext)()
-v.Q=u
-t=u.destination
-v.a=t
-v.b=u.listener
-s=J.mH$x(u)
-v.c=s
-r=J.mH$x(u)
-v.d=r
-u=J.mH$x(u)
-v.e=u
+try{w=new Q.OR(null,null,null,null,null,null,z,P.L5(null,null,null,P.K,Q.i0),P.L5(null,null,null,P.K,Q.JM),null,null,!1,!1)
+v=new (window.AudioContext||window.webkitAudioContext)()
+w.Q=v
+u=v.destination
+w.a=u
+w.b=v.listener
+t=J.mH$x(v)
+w.c=t
+s=J.mH$x(v)
+w.d=s
+v=J.mH$x(v)
+w.e=v
+t.connect(u,0,0)
 s.connect(t,0,0)
-r.connect(s,0,0)
-u.connect(s,0,0)
-v.y=Q.JJ(v,r)
-y=v
+v.connect(t,0,0)
+w.y=Q.JJ(w,s)
+y=w
 x=y.je("default")
-x.swi(!1)}catch(q){H.Ru(q)
+x.swi(!1)}catch(r){H.Ru(r)
 y=new V.NI(z,P.L5(null,null,null,P.K,V.uK))}return y},
 O:{
 "^":"t:0;Q,a",
@@ -8171,7 +8159,6 @@ J.I$n=function(a){if(typeof a=="number")return-a
 return J.Wx(a).I(a)}
 J.N$n=function(a,b){return J.Wx(a).N(a,b)}
 J.Ne$x=function(a,b){return J.R(a).Ne(a,b)}
-J.Nj$s=function(a,b,c){return J.NH(a).Nj(a,b,c)}
 J.Og$x=function(a,b){return J.R(a).Og(a,b)}
 J.QF$x=function(a,b,c){return J.R(a).QF(a,b,c)}
 J.Rz$ax=function(a,b){return J.w1(a).Rz(a,b)}
@@ -8197,7 +8184,6 @@ J.aC$x=function(a,b,c,d){return J.R(a).aC(a,b,c,d)}
 J.aN$ax=function(a,b){return J.w1(a).aN(a,b)}
 J.bS$s=function(a){return J.NH(a).bS(a)}
 J.bY$x=function(a){return J.R(a).bY(a)}
-J.cn$asx=function(a,b){return J.W(a).cn(a,b)}
 J.dQ$x=function(a){return J.R(a).dQ(a)}
 J.dd$s=function(a,b){return J.NH(a).dd(a,b)}
 J.h$ns=function(a,b){if(typeof a=="number"&&typeof b=="number")return a+b
