@@ -84,5 +84,25 @@ class AudiElementClip implements AudioClip {
     audioElement.play();
   }
 
-  noSuchMethod(Invocation im) {}
+  set url(String u) {
+    _url = u;
+  }
+
+  bool get isReadyToPlay => true;
+  num get frequency => 0;
+  num get samples => 0;
+  num get length => 0;
+  num get numberOfChannels => 0;
+  String get errorString => '';
+  bool get hasError => false;
+  String get url => _url;
+
+  getSampleFramesForChannel(num channel) => null;
+  void makeBuffer(
+      num numberOfSampleFrames, num numberOfChannels, num sampleRate) {}
+
+  void clearError() {}
+
+  AudioClip fromMap(Map map) => this;
+  Map toJson() => null;
 }
