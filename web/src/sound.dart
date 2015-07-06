@@ -1,21 +1,20 @@
 part of ld26_minimalism;
 
 class SoundSystem extends EntityProcessingSystem {
-  ComponentMapper<Sound> sm;
+  Mapper<Sound> sm;
   AudioManager audioManager;
   SoundSystem(this.audioManager) : super(Aspect.getAspectForAllOf([Sound]));
 
   initialize() {
-    sm = new ComponentMapper<Sound>(Sound, world);
+    sm = new Mapper<Sound>(Sound, world);
   }
 
   processEntity(Entity e) {
-    var sound = sm.get(e);
+    var sound = sm[e];
     audioManager.playClipFromSource('default', sound.clipName);
     e.deleteFromWorld();
   }
 }
-
 
 AudioManager createAudioManager() {
   int webIndex = window.location.href.lastIndexOf('/web/');
@@ -43,25 +42,24 @@ class AudioElementManager implements AudioManager {
     if (clip != null) {
       return clip;
     }
-    clip = new AudiElementClip._internal(this, name, "$baseURL$url");
+    clip = new AudiElementClip._internal("$baseURL$url");
     _clips[name] = clip;
     return clip;
   }
 
-  AudioSound playClipFromSource(String sourceName, String clipName, [bool looped=false]) {
+  AudioSound playClipFromSource(String sourceName, String clipName,
+      [bool looped = false]) {
     _clips[clipName].play();
     return null;
   }
 
-  dynamic noSuchMethod(Invocation im) {}
+  noSuchMethod(Invocation im) {}
 }
 
 class AudiElementClip implements AudioClip {
-  final AudioManager _manager;
-  String _name;
   String _url;
   var audioElements = new List<AudioElement>();
-  AudiElementClip._internal(this._manager, this._name, this._url);
+  AudiElementClip._internal(this._url);
 
   Future<AudioClip> load() {
     var audioElement = new AudioElement();
@@ -86,5 +84,5 @@ class AudiElementClip implements AudioClip {
     audioElement.play();
   }
 
-  dynamic noSuchMethod(Invocation im) {}
+  noSuchMethod(Invocation im) {}
 }

@@ -1,12 +1,14 @@
 part of ld26_minimalism;
 
 class BackgroundRenderingSystem extends VoidEntitySystem {
-  CanvasQuery cq;
+  CanvasRenderingContext2D cq;
 
   BackgroundRenderingSystem(this.cq);
 
   processSystem() {
-    cq.clear(color: '#dfefd7');
+    cq
+      ..fillStyle = '#dfefd7'
+      ..fillRect(0, 0, WIDTH, HEIGHT);
   }
 
   begin() => cq.save();
@@ -18,17 +20,18 @@ class GameStateRenderingSystem extends VoidEntitySystem {
   static const LABEL_HIGHSCORE = 'Highscore: ';
   static const LABEL_ACHIEVEMENTS = 'Achievements: ';
   static const LABEL_COUNTDOWN = 'Countdown: ';
-  Rectangle scoreLabelBounds, achievementsLabelBounds, highScoreLabelBounds, countdownLabelBounds;
+  Rectangle scoreLabelBounds, achievementsLabelBounds, countdownLabelBounds;
+  TextMetrics highScoreLabelBounds;
   num scoreY, achievementsY, countdownY;
-  CanvasQuery cq;
+  CanvasRenderingContext2D cq;
   GameState gameState;
   GameStateRenderingSystem(this.cq, this.gameState);
 
   initialize() {
-    scoreLabelBounds = cq.textBoundaries(LABEL_SCORE);
-    achievementsLabelBounds = cq.textBoundaries(LABEL_ACHIEVEMENTS);
-    highScoreLabelBounds = cq.textBoundaries(LABEL_HIGHSCORE);
-    countdownLabelBounds = cq.textBoundaries(LABEL_COUNTDOWN);
+    scoreLabelBounds = textBoundaries(cq, LABEL_SCORE);
+    achievementsLabelBounds = textBoundaries(cq, LABEL_ACHIEVEMENTS);
+    highScoreLabelBounds = cq.measureText(LABEL_HIGHSCORE);
+    countdownLabelBounds = textBoundaries(cq, LABEL_COUNTDOWN);
     scoreY = HEIGHT - scoreLabelBounds.height;
     achievementsY = scoreY - achievementsLabelBounds.height;
     countdownY = achievementsY - countdownLabelBounds.height;
@@ -36,23 +39,25 @@ class GameStateRenderingSystem extends VoidEntitySystem {
 
   processSystem() {
     cq.fillText(LABEL_SCORE, WIDTH - 150 - scoreLabelBounds.width, scoreY);
-    cq.fillText(LABEL_ACHIEVEMENTS, WIDTH - 150 - achievementsLabelBounds.width, achievementsY);
-    cq.fillText(LABEL_COUNTDOWN, WIDTH - 150 - countdownLabelBounds.width, countdownY);
+    cq.fillText(LABEL_ACHIEVEMENTS, WIDTH - 150 - achievementsLabelBounds.width,
+        achievementsY);
+    cq.fillText(
+        LABEL_COUNTDOWN, WIDTH - 150 - countdownLabelBounds.width, countdownY);
     cq.fillText(LABEL_HIGHSCORE, WIDTH - 150 - highScoreLabelBounds.width, 0);
     var text = gameState.score.toStringAsFixed(3);
-    var textBounds = cq.textBoundaries(text);
+    var textBounds = cq.measureText(text);
     cq.fillText(text, WIDTH - textBounds.width, scoreY);
 
     text = gameState.achievementCount.toString();
-    textBounds = cq.textBoundaries(text);
+    textBounds = cq.measureText(text);
     cq.fillText(text, WIDTH - textBounds.width, achievementsY);
 
     text = gameState.countdown.toString();
-    textBounds = cq.textBoundaries(text);
+    textBounds = cq.measureText(text);
     cq.fillText(text, WIDTH - textBounds.width, countdownY);
 
     text = gameState.highScore.toStringAsFixed(3);
-    textBounds = cq.textBoundaries(text);
+    textBounds = cq.measureText(text);
     cq.fillText(text, WIDTH - textBounds.width, 0);
   }
 
@@ -63,44 +68,51 @@ class GameStateRenderingSystem extends VoidEntitySystem {
 
 class AchievementRenderingSystem extends EntitySystem {
   static const int ACHIEVEMENT_WIDTH = 200;
-  CanvasQuery wrapper;
-  CanvasQuery labelLayer;
-  CanvasQuery descLayer;
+  CanvasRenderingContext2D wrapper;
+  CanvasRenderingContext2D labelLayer;
+  CanvasRenderingContext2D descLayer;
   GameState gameState;
   bool isFirst;
-  ComponentMapper<Achievement> am;
-  ComponentMapper<ExpirationTimer> tm;
-  AchievementRenderingSystem(this.wrapper, this.gameState) : super(Aspect.getAspectForAllOf([Achievement, ExpirationTimer]));
+  Mapper<Achievement> am;
+  Mapper<ExpirationTimer> tm;
+  AchievementRenderingSystem(this.wrapper, this.gameState)
+      : super(Aspect.getAspectForAllOf([Achievement, ExpirationTimer]));
 
   initialize() {
-    am = new ComponentMapper<Achievement>(Achievement, world);
-    tm = new ComponentMapper<ExpirationTimer>(ExpirationTimer, world);
-    labelLayer = cq(ACHIEVEMENT_WIDTH + 20, HEIGHT)..textBaseline = 'top'
-        ..font = 'bold 16px Verdana'
-        ..fillStyle = '#30346d'
-        ..lineWidth = 3;
-    descLayer = cq(ACHIEVEMENT_WIDTH + 20, HEIGHT)..textBaseline = 'top'
-        ..fillStyle = '#140c1c'
-        ..font = '14px Verdana';
+    am = new Mapper<Achievement>(Achievement, world);
+    tm = new Mapper<ExpirationTimer>(ExpirationTimer, world);
+    CanvasElement labelElement =
+        new CanvasElement(width: ACHIEVEMENT_WIDTH + 20, height: HEIGHT);
+    labelLayer = labelElement.context2D
+      ..textBaseline = 'top'
+      ..font = 'bold 16px Verdana'
+      ..fillStyle = '#30346d'
+      ..lineWidth = 3;
+    CanvasElement descElement =
+        new CanvasElement(width: ACHIEVEMENT_WIDTH + 20, height: HEIGHT);
+    descLayer = descElement.context2D
+      ..textBaseline = 'top'
+      ..fillStyle = '#140c1c'
+      ..font = '14px Verdana';
   }
 
-  processEntities(ReadOnlyBag<Entity> entities) {
+  processEntities(Iterable<Entity> entities) {
     List<Entity> sorted = new List<Entity>();
     entities.forEach((e) => sorted.add(e));
     sorted.sort((e1, e2) {
-      var a1 = am.get(e1);
-      var a2 = am.get(e2);
+      var a1 = am[e1];
+      var a2 = am[e2];
       return a1.index - a2.index;
     });
     sorted.forEach((e) => processEntity(e));
   }
 
   processEntity(Entity e) {
-    var achievement = am.get(e);
-    var timer = tm.get(e);
+    var achievement = am[e];
+    var timer = tm[e];
     var ratio = timer.ratio;
-    var labelBounds = labelLayer.textBoundaries(achievement.label, ACHIEVEMENT_WIDTH);
-    var descBounds = descLayer.textBoundaries(achievement.desc, ACHIEVEMENT_WIDTH);
+    var labelBounds = textBoundaries(labelLayer, achievement.label);
+    var descBounds = textBoundaries(descLayer, achievement.desc);
     var height = (descBounds.height + labelBounds.height) + 5;
 
     if (isFirst) {
@@ -113,11 +125,16 @@ class AchievementRenderingSystem extends EntitySystem {
     labelLayer.translate(0, height + 2);
     descLayer.translate(0, height + 2);
 
-    labelLayer..globalAlpha = ratio
-        ..roundRect(2, -height, ACHIEVEMENT_WIDTH + 16, height, 10, fillStyle: '#597dcf', strokeStyle: '#d34549')
-        ..wrappedText(achievement.label, 10, -height, ACHIEVEMENT_WIDTH);
-    descLayer..globalAlpha = ratio
-        ..wrappedText(achievement.desc, 10, -height + labelBounds.height, ACHIEVEMENT_WIDTH);
+    labelLayer
+      ..globalAlpha = ratio
+      ..fillStyle = '#597dcf'
+      ..strokeStyle = '#d34549'
+      ..strokeRect(2, -height, ACHIEVEMENT_WIDTH + 16, height)
+      ..fillRect(2, -height, ACHIEVEMENT_WIDTH + 16, height);
+    wrappedText(labelLayer, achievement.label, 10, -height, ACHIEVEMENT_WIDTH);
+    descLayer..globalAlpha = ratio;
+    wrappedText(descLayer, achievement.desc, 10, -height + labelBounds.height,
+        ACHIEVEMENT_WIDTH);
   }
 
   begin() {
@@ -131,26 +148,27 @@ class AchievementRenderingSystem extends EntitySystem {
     descLayer.restore();
     wrapper.drawImage(labelLayer.canvas, 0, 0);
     wrapper.drawImage(descLayer.canvas, 0, 0);
-    labelLayer.clear();
-    descLayer.clear();
+    labelLayer.clearRect(0, 0, ACHIEVEMENT_WIDTH + 20, HEIGHT);
+    descLayer.clearRect(0, 0, ACHIEVEMENT_WIDTH + 20, HEIGHT);
   }
 
   checkProcessing() => true;
 }
 
 class MenuRenderingSystem extends EntityProcessingSystem {
-  ComponentMapper<MenuItem> mm;
-  CanvasQuery cq;
+  Mapper<MenuItem> mm;
+  CanvasRenderingContext2D cq;
   GameState gameState;
-  MenuRenderingSystem(this.cq, this.gameState) : super(Aspect.getAspectForAllOf([MenuItem]));
+  MenuRenderingSystem(this.cq, this.gameState)
+      : super(Aspect.getAspectForAllOf([MenuItem]));
 
   initialize() {
-    mm = new ComponentMapper<MenuItem>(MenuItem, world);
+    mm = new Mapper<MenuItem>(MenuItem, world);
   }
 
   processEntity(Entity e) {
-    var m = mm.get(e);
-    var bounds = cq.textBoundaries(m.label);
+    var m = mm[e];
+    var bounds = textBoundaries(cq, m.label);
     var fillStyle, strokeStyle, textColor;
     if (m.hover) {
       fillStyle = '#d37d2c';
@@ -161,18 +179,26 @@ class MenuRenderingSystem extends EntityProcessingSystem {
       strokeStyle = '#346524';
       textColor = '#dbd75d';
     }
-    cq..roundRect(m.x, m.y, m.width, m.height, 20, strokeStyle: strokeStyle, fillStyle: fillStyle)
-           ..fillStyle = textColor
-           ..fillText(m.label, m.x + m.width / 2 - bounds.width / 2,
-                               m.y + m.height / 2 - bounds.height / 2);
+    cq
+      ..fillStyle = fillStyle
+      ..strokeStyle = strokeStyle
+      ..strokeRect(m.x, m.y, m.width, m.height)
+      ..fillRect(m.x, m.y, m.width, m.height)
+      ..fillStyle = textColor
+      ..fillText(m.label, m.x + m.width / 2 - bounds.width / 2,
+          m.y + m.height / 2 - bounds.height / 2);
   }
 
   begin() {
-    cq..save()
-           ..clear(color: '#dfefd7')
-           ..lineWidth = 5
-           ..roundRect(20, 20, WIDTH - 40, HEIGHT - 40, 20, strokeStyle: '#346524', fillStyle: '#30346d');
-
+    cq
+      ..save()
+      ..fillStyle = '#dfefd7'
+      ..fillRect(0, 0, WIDTH, HEIGHT)
+      ..lineWidth = 5
+      ..fillStyle = '#30346d'
+      ..strokeStyle = '#346524'
+      ..strokeRect(20, 20, WIDTH - 40, HEIGHT - 40)
+      ..fillRect(20, 20, WIDTH - 40, HEIGHT - 40);
   }
 
   end() {
@@ -183,30 +209,33 @@ class MenuRenderingSystem extends EntityProcessingSystem {
 }
 
 class RectangleRenderingSystem extends EntityProcessingSystem {
-  ComponentMapper<RectangleBody> rbm;
-  ComponentMapper<Position> pm;
-  ComponentMapper<RenderStyle> sm;
-  CanvasQuery cq;
-  RectangleRenderingSystem(this.cq) : super(Aspect.getAspectForAllOf([RectangleBody, Position, RenderStyle]));
+  Mapper<RectangleBody> rbm;
+  Mapper<Position> pm;
+  Mapper<RenderStyle> sm;
+  CanvasRenderingContext2D cq;
+  RectangleRenderingSystem(this.cq)
+      : super(Aspect.getAspectForAllOf([RectangleBody, Position, RenderStyle]));
 
   initialize() {
-    rbm = new ComponentMapper<RectangleBody>(RectangleBody, world);
-    pm = new ComponentMapper<Position>(Position, world);
-    sm = new ComponentMapper<RenderStyle>(RenderStyle, world);
+    rbm = new Mapper<RectangleBody>(RectangleBody, world);
+    pm = new Mapper<Position>(Position, world);
+    sm = new Mapper<RenderStyle>(RenderStyle, world);
   }
 
   processEntity(Entity e) {
-    var pos = pm.get(e);
-    var body = rbm.get(e);
-    var style = sm.get(e);
+    var pos = pm[e];
+    var body = rbm[e];
+    var style = sm[e];
 
-    cq..strokeStyle = style.strokeStyle
-        ..fillStyle = style.fillStyle
-        ..beginPath()
-        ..rect(pos.cx - body.width/2, pos.cy - body.height/2, body.width, body.height)
-        ..closePath()
-        ..fill()
-        ..stroke();
+    cq
+      ..strokeStyle = style.strokeStyle
+      ..fillStyle = style.fillStyle
+      ..beginPath()
+      ..rect(pos.cx - body.width / 2, pos.cy - body.height / 2, body.width,
+          body.height)
+      ..closePath()
+      ..fill()
+      ..stroke();
   }
 
   begin() => cq.save();
@@ -214,23 +243,99 @@ class RectangleRenderingSystem extends EntityProcessingSystem {
 }
 
 class CircleRenderingSystem extends EntityProcessingSystem {
-  ComponentMapper<CircleBody> bm;
-  ComponentMapper<Position> pm;
-  ComponentMapper<RenderStyle> sm;
-  CanvasQuery cq;
-  CircleRenderingSystem(this.cq) : super(Aspect.getAspectForAllOf([CircleBody, Position, RenderStyle]));
+  Mapper<CircleBody> bm;
+  Mapper<Position> pm;
+  Mapper<RenderStyle> sm;
+  CanvasRenderingContext2D cq;
+  CircleRenderingSystem(this.cq)
+      : super(Aspect.getAspectForAllOf([CircleBody, Position, RenderStyle]));
 
   initialize() {
-    bm = new ComponentMapper<CircleBody>(CircleBody, world);
-    pm = new ComponentMapper<Position>(Position, world);
-    sm = new ComponentMapper<RenderStyle>(RenderStyle, world);
+    bm = new Mapper<CircleBody>(CircleBody, world);
+    pm = new Mapper<Position>(Position, world);
+    sm = new Mapper<RenderStyle>(RenderStyle, world);
   }
 
   processEntity(Entity e) {
-    var pos = pm.get(e);
-    var body = bm.get(e);
-    var style = sm.get(e);
+    var pos = pm[e];
+    var body = bm[e];
+    var style = sm[e];
 
-    cq.circle(pos.cx, pos.cy, body.radius, strokeStyle: style.strokeStyle, fillStyle: style.fillStyle);
+    cq
+      ..save()
+      ..fillStyle = style.fillStyle
+      ..strokeStyle = style.strokeStyle
+      ..arc(pos.cx, pos.cy, body.radius, 0, 2 * PI)
+      ..stroke()
+      ..fill()
+      ..restore();
   }
+}
+
+// originally part of CanvasQuery
+final Pattern _whitespacePattern = new RegExp((r'\s+'));
+/**
+ * Writes [text] at [x], [y] and wraps at [maxWidth].
+ *
+ * The [nlCallback] will be called before a line is written.
+ */
+void wrappedText(
+    CanvasRenderingContext2D ctx, String text, int x, int y, num maxWidth) {
+  var regexp = new RegExp(r"(\d+)");
+  var h = int.parse(regexp.firstMatch(ctx.font).group(0)) * 2;
+  var lines = getLines(ctx, text, maxWidth);
+
+  for (var i = 0; i < lines.length; i++) {
+    var oy = (y + i * h * 0.6).toInt();
+    var line = lines[i];
+    ctx.fillText(line, x, oy);
+  }
+}
+
+/**
+ * Returns a [Rectangle] with the size of a given [text]. If [maxWidth]
+ * is given, the [text] will be wrapped.
+ */
+Rectangle textBoundaries(CanvasRenderingContext2D ctx, String text,
+    [num maxWidth]) {
+  var regexp = new RegExp(r"(\d+)");
+  var h = int.parse(regexp.firstMatch(ctx.font).group(0)) * 2;
+  List<String> lines = getLines(ctx, text, maxWidth);
+  if (null == maxWidth) {
+    maxWidth = ctx.measureText(text).width;
+  }
+  return new Rectangle(0, 0, maxWidth, (lines.length * h * 0.6).toInt());
+}
+
+/**
+ * Splits the [text] at [maxWidth] and returns a list of lines.
+ */
+List<String> getLines(CanvasRenderingContext2D ctx, String text,
+    [num maxWidth]) {
+  var words = text.split(_whitespacePattern);
+
+  var ox = 0;
+
+  var lines = new List<String>.from([""]);
+  var spaceWidth = ctx.measureText(" ").width;
+  if (null != maxWidth) {
+    maxWidth += spaceWidth;
+    var line = 0;
+    for (var i = 0; i < words.length; i++) {
+      var word = "${words[i]} ";
+      var wordWidth = ctx.measureText(word).width;
+
+      if (ox + wordWidth > maxWidth) {
+        lines.add("");
+        line++;
+        ox = 0;
+      }
+      lines[line] = "${lines[line]}$word";
+
+      ox += wordWidth;
+    }
+  } else {
+    lines = [text];
+  }
+  return lines;
 }

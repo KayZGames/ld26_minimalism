@@ -4,8 +4,9 @@ author: Dennis.Kaselow+ld@gmail.com
 dependencies:
   browser: any
   dartemis: any
-  canvas_query: any
   lawndart: any
   simple_audio:
-    git: https://github.com/johnmccutchan/simpleaudio.git
-
+    path: ../simple_audio
+  dart_to_js_script_rewriter: any
+transformers:
+- dart_to_js_script_rewriter

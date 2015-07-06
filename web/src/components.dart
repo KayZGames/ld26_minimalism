@@ -25,7 +25,8 @@ class MenuItem extends Component {
   final String label;
   final Function hoverAction, clickAction;
   bool hover = false;
-  MenuItem(this.x, this.y, this.width, this.height, this.label, this.hoverAction, this.clickAction);
+  MenuItem(this.x, this.y, this.width, this.height, this.label,
+      this.hoverAction, this.clickAction);
 }
 
 class RectangleBody extends Component {
@@ -46,7 +47,8 @@ class Position extends Component {
 class PlayerFollower extends Component {
   num minX, maxX, minY, maxY, maxVelocity;
   bool horizontal, vertical;
-  PlayerFollower(this.minX, this.maxX, this.minY, this.maxY, this.maxVelocity, {this.horizontal: true, this.vertical: true});
+  PlayerFollower(this.minX, this.maxX, this.minY, this.maxY, this.maxVelocity,
+      {this.horizontal: true, this.vertical: true});
 }
 
 class RenderStyle extends Component {
@@ -57,7 +59,7 @@ class RenderStyle extends Component {
 class Velocity extends Component {
   num amount, _angle;
   Velocity(this.amount, this._angle);
-  set angle(num value) => _angle = value % FastMath.TWO_PI;
+  set angle(num value) => _angle = value % (2.0 * PI);
   get angle => _angle;
 }
 

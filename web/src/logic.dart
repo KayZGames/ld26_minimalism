@@ -25,7 +25,8 @@ class TimeIsScoreSystem extends VoidEntitySystem {
     }
   }
 
-  checkProcessing() => gameState.running && activeFor.contains(gameState.gameId);
+  checkProcessing() =>
+      gameState.running && activeFor.contains(gameState.gameId);
 }
 
 class AchievementSystem extends VoidEntitySystem {
@@ -37,7 +38,8 @@ class AchievementSystem extends VoidEntitySystem {
     achievements.forEach((key, achievement) {
       if (achievement['check'](gameState)) {
         Entity e = world.createEntity();
-        e.addComponent(new Achievement(achievement['label'], achievement['desc'], gameState.achievementCount));
+        e.addComponent(new Achievement(achievement['label'],
+            achievement['desc'], gameState.achievementCount));
         e.addComponent(new ExpirationTimer(5000));
         e.addToWorld();
         e = world.createEntity();
@@ -52,16 +54,17 @@ class AchievementSystem extends VoidEntitySystem {
 }
 
 class ExpirationSystem extends EntityProcessingSystem {
-  ComponentMapper<ExpirationTimer> tm;
+  Mapper<ExpirationTimer> tm;
   GameState gameState;
-  ExpirationSystem(this.gameState) : super(Aspect.getAspectForAllOf([ExpirationTimer]));
+  ExpirationSystem(this.gameState)
+      : super(Aspect.getAspectForAllOf([ExpirationTimer]));
 
   initialize() {
-    tm = new ComponentMapper<ExpirationTimer>(ExpirationTimer, world);
+    tm = new Mapper<ExpirationTimer>(ExpirationTimer, world);
   }
 
   processEntity(Entity e) {
-    var timer = tm.get(e);
+    var timer = tm[e];
     if (timer.current < 0) {
       e.deleteFromWorld();
     } else {
@@ -74,21 +77,22 @@ class ExpirationSystem extends EntityProcessingSystem {
 
 class PlayerFollowingMovementSystem extends EntityProcessingSystem {
   Position playerPos;
-  ComponentMapper<Position> pm;
-  ComponentMapper<PlayerFollower> fm;
+  Mapper<Position> pm;
+  Mapper<PlayerFollower> fm;
   GameState gameState;
-  PlayerFollowingMovementSystem(this.gameState) : super(Aspect.getAspectForAllOf([Position, PlayerFollower]));
+  PlayerFollowingMovementSystem(this.gameState)
+      : super(Aspect.getAspectForAllOf([Position, PlayerFollower]));
 
   initialize() {
     TagManager tm = world.getManager(TagManager);
     playerPos = tm.getEntity(TAG_PLAYER).getComponentByClass(Position);
-    pm = new ComponentMapper<Position>(Position, world);
-    fm = new ComponentMapper<PlayerFollower>(PlayerFollower, world);
+    pm = new Mapper<Position>(Position, world);
+    fm = new Mapper<PlayerFollower>(PlayerFollower, world);
   }
 
   processEntity(Entity e) {
-    var pos = pm.get(e);
-    var follower = fm.get(e);
+    var pos = pm[e];
+    var follower = fm[e];
     var diffX = 0;
     var diffY = 0;
     if (follower.horizontal) {
@@ -102,9 +106,11 @@ class PlayerFollowingMovementSystem extends EntityProcessingSystem {
     num angle = atan2(diffY, diffX);
     var changeX = follower.maxVelocity * cos(angle) * world.delta;
     var changeY = follower.maxVelocity * sin(angle) * world.delta;
-    pos.cx += FastMath.signum(changeX) * min(changeX.abs(), diffX.abs());
-    pos.cy += FastMath.signum(changeY) * min(changeY.abs(), diffY.abs());
+    pos.cx += signum(changeX) * min(changeX.abs(), diffX.abs());
+    pos.cy += signum(changeY) * min(changeY.abs(), diffY.abs());
   }
+
+  int signum(num a) => a < 0 ? -1 : 1;
 
   num getTarget(num targetPos, num minPos, num maxPos) {
     if (targetPos > maxPos) {
@@ -119,19 +125,20 @@ class PlayerFollowingMovementSystem extends EntityProcessingSystem {
 }
 
 class MovementSystem extends EntityProcessingSystem {
-  ComponentMapper<Position> pm;
-  ComponentMapper<Velocity> vm;
+  Mapper<Position> pm;
+  Mapper<Velocity> vm;
   GameState gameState;
-  MovementSystem(this.gameState) : super(Aspect.getAspectForAllOf([Position, Velocity]));
+  MovementSystem(this.gameState)
+      : super(Aspect.getAspectForAllOf([Position, Velocity]));
 
   initialize() {
-    vm = new ComponentMapper<Velocity>(Velocity, world);
-    pm = new ComponentMapper<Position>(Position, world);
+    vm = new Mapper<Velocity>(Velocity, world);
+    pm = new Mapper<Position>(Position, world);
   }
 
   processEntity(Entity e) {
-    var v = vm.get(e);
-    var p = pm.get(e);
+    var v = vm[e];
+    var p = pm[e];
     p.cx += v.amount * cos(v.angle) * world.delta;
     p.cy += v.amount * sin(-v.angle) * world.delta;
   }
@@ -141,37 +148,40 @@ class MovementSystem extends EntityProcessingSystem {
 
 class PongCollisionDetectionSystem extends EntityProcessingSystem {
   GroupManager gm;
-  ComponentMapper<Position> pm;
-  ComponentMapper<Velocity> vm;
-  ComponentMapper<RectangleBody> bm;
-  ComponentMapper<Destroyable> dm;
-  ComponentMapper<Speedup> sm;
+  Mapper<Position> pm;
+  Mapper<Velocity> vm;
+  Mapper<RectangleBody> bm;
+  Mapper<Destroyable> dm;
+  Mapper<Speedup> sm;
   GameState gameState;
 
-  PongCollisionDetectionSystem(this.gameState) : super(Aspect.getAspectForAllOf([Position, RectangleBody, Velocity]).exclude([PlayerFollower]));
+  PongCollisionDetectionSystem(this.gameState) : super(Aspect
+          .getAspectForAllOf([Position, RectangleBody, Velocity])
+          .exclude([PlayerFollower]));
 
   initialize() {
     gm = world.getManager(GroupManager);
-    vm = new ComponentMapper<Velocity>(Velocity, world);
-    pm = new ComponentMapper<Position>(Position, world);
-    bm = new ComponentMapper<RectangleBody>(RectangleBody, world);
-    dm = new ComponentMapper<Destroyable>(Destroyable, world);
-    sm = new ComponentMapper<Speedup>(Speedup, world);
+    vm = new Mapper<Velocity>(Velocity, world);
+    pm = new Mapper<Position>(Position, world);
+    bm = new Mapper<RectangleBody>(RectangleBody, world);
+    dm = new Mapper<Destroyable>(Destroyable, world);
+    sm = new Mapper<Speedup>(Speedup, world);
   }
 
   processEntity(Entity e) {
-    var ballPos = pm.get(e);
-    var ballBody = bm.get(e);
+    var ballPos = pm[e];
+    var ballBody = bm[e];
     var blocks = gm.getEntities(gameState.getGroup(GROUP_BLOCK));
     blocks.forEach((block) {
-      var paddlePos = pm.get(block);
-      var paddleBody = bm.get(block);
+      var paddlePos = pm[block];
+      var paddleBody = bm[block];
       var xDiff = ballPos.cx - paddlePos.cx;
       var yDiff = ballPos.cy - paddlePos.cy;
       if (isColliding(xDiff, yDiff, ballBody, paddleBody)) {
         gameState.score += 1;
-        var ballVel = vm.get(e);
-        var nextAngle = getNextAngle(ballPos, ballBody, paddlePos, paddleBody, ballVel);
+        var ballVel = vm[e];
+        var nextAngle =
+            getNextAngle(ballPos, ballBody, paddlePos, paddleBody, ballVel);
 
         do {
           ballPos.cx -= ballVel.amount * cos(ballVel.angle) * world.delta;
@@ -197,7 +207,10 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
         }
       }
     });
-    if (ballPos.cx < -200 || ballPos.cy < -200 || ballPos.cx > WIDTH + 200 || ballPos.cy > HEIGHT + 200) {
+    if (ballPos.cx < -200 ||
+        ballPos.cy < -200 ||
+        ballPos.cx > WIDTH + 200 ||
+        ballPos.cy > HEIGHT + 200) {
       gameState.score -= 10;
       e.deleteFromWorld();
       gameState.ponged = 0;
@@ -205,20 +218,21 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
     }
   }
 
-  num getNextAngle(Position ballPos, RectangleBody ballBody, Position paddlePos, RectangleBody paddleBody, Velocity ballVel) {
+  num getNextAngle(Position ballPos, RectangleBody ballBody, Position paddlePos,
+      RectangleBody paddleBody, Velocity ballVel) {
     var nextAngle;
     var ballRect = getRect(ballPos, ballBody);
     var paddleRect = getRect(paddlePos, paddleBody);
     var intersection = ballRect.intersection(paddleRect);
     if (isLeftOrRight(intersection)) {
       if ((intersection.width - intersection.height).abs() < 6) {
-        nextAngle = PI - ballVel.angle - PI/4 + random.nextDouble() * PI/2;
+        nextAngle = PI - ballVel.angle - PI / 4 + random.nextDouble() * PI / 2;
       } else {
         nextAngle = PI - ballVel.angle;
       }
     } else {
       if ((intersection.width - intersection.height).abs() < 6) {
-        nextAngle = -ballVel.angle - PI/4 + random.nextDouble() * PI/2;
+        nextAngle = -ballVel.angle - PI / 4 + random.nextDouble() * PI / 2;
       } else {
         nextAngle = -ballVel.angle;
       }
@@ -227,7 +241,8 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
   }
 
   Rectangle getRect(Position pos, RectangleBody body) {
-    return new Rectangle(pos.cx - body.width/2, pos.cy - body.height/2, body.width, body.height);
+    return new Rectangle(pos.cx - body.width / 2, pos.cy - body.height / 2,
+        body.width, body.height);
   }
 
   bool isLeftOrRight(Rectangle intersection) {
@@ -237,10 +252,11 @@ class PongCollisionDetectionSystem extends EntityProcessingSystem {
     return false;
   }
 
-  bool isColliding(num xDiff, num yDiff, RectangleBody ballBody, RectangleBody paddleBody) {
-    if (xDiff.abs() <= ballBody.width/2 + paddleBody.width/2
-        && yDiff.abs() <= ballBody.height/2 + paddleBody.height/2) {
-        return true;
+  bool isColliding(
+      num xDiff, num yDiff, RectangleBody ballBody, RectangleBody paddleBody) {
+    if (xDiff.abs() <= ballBody.width / 2 + paddleBody.width / 2 &&
+        yDiff.abs() <= ballBody.height / 2 + paddleBody.height / 2) {
+      return true;
     }
     return false;
   }
@@ -273,12 +289,12 @@ class DodgeballSpawningSystem extends IntervalEntitySystem {
     if (random.nextBool()) {
       x = random.nextInt(WIDTH);
       if (random.nextBool()) {
-        y = - 100;
+        y = -100;
       } else {
         y = HEIGHT + 100;
       }
     } else if (random.nextBool()) {
-      x = - 100;
+      x = -100;
       y = random.nextInt(HEIGHT);
     } else {
       x = WIDTH + 100;
@@ -298,41 +314,49 @@ class DodgeballSpawningSystem extends IntervalEntitySystem {
     gm.add(e, gameState.getGroup(GROUP_GAME));
   }
 
-  checkProcessing() => gameState.running && activeFor.contains(gameState.gameId)  && super.checkProcessing();
+  checkProcessing() => gameState.running &&
+      activeFor.contains(gameState.gameId) &&
+      super.checkProcessing();
 }
 
 class DodgeballScoringSystem extends EntityProcessingSystem {
   var activeFor = [GAME_DODGEBALL];
   TagManager tm;
-  ComponentMapper<Position> pm;
-  ComponentMapper<Velocity> vm;
-  ComponentMapper<CircleBody> bm;
-  ComponentMapper<Destroyable> dm;
+  Mapper<Position> pm;
+  Mapper<Velocity> vm;
+  Mapper<CircleBody> bm;
+  Mapper<Destroyable> dm;
   GameState gameState;
 
-  DodgeballScoringSystem(this.gameState) : super(Aspect.getAspectForAllOf([Position, CircleBody, Velocity]).exclude([PlayerFollower]));
+  DodgeballScoringSystem(this.gameState) : super(Aspect
+          .getAspectForAllOf([Position, CircleBody, Velocity])
+          .exclude([PlayerFollower]));
 
   initialize() {
     tm = world.getManager(TagManager);
-    vm = new ComponentMapper<Velocity>(Velocity, world);
-    pm = new ComponentMapper<Position>(Position, world);
-    bm = new ComponentMapper<CircleBody>(CircleBody, world);
-    dm = new ComponentMapper<Destroyable>(Destroyable, world);
+    vm = new Mapper<Velocity>(Velocity, world);
+    pm = new Mapper<Position>(Position, world);
+    bm = new Mapper<CircleBody>(CircleBody, world);
+    dm = new Mapper<Destroyable>(Destroyable, world);
   }
 
   processEntity(Entity e) {
-    var ballPos = pm.get(e);
-    var ballBody = bm.get(e);
+    var ballPos = pm[e];
+    var ballBody = bm[e];
     var player = tm.getEntity(TAG_DODGEBALLPLAYER);
-    var playerPos = pm.get(player);
-    var playerBody = bm.get(player);
-    if (Utils.doCirclesCollide(ballPos.cx, ballPos.cy, ballBody.radius, playerPos.cx, playerPos.cy, playerBody.radius)) {
+    var playerPos = pm[player];
+    var playerBody = bm[player];
+    if (doCirclesCollide(ballPos.cx, ballPos.cy, ballBody.radius, playerPos.cx,
+        playerPos.cy, playerBody.radius)) {
       gameState.score -= 10;
       e.deleteFromWorld();
       createSound(world, 'dodgeballhit');
       gameState.dodged = 0;
       gameState.notDodged++;
-    } else if (ballPos.cx < -200 || ballPos.cy < -200 || ballPos.cx > WIDTH + 200 || ballPos.cy > HEIGHT + 200) {
+    } else if (ballPos.cx < -200 ||
+        ballPos.cy < -200 ||
+        ballPos.cx > WIDTH + 200 ||
+        ballPos.cy > HEIGHT + 200) {
       gameState.score += 1;
       e.deleteFromWorld();
       gameState.dodged++;
@@ -340,8 +364,16 @@ class DodgeballScoringSystem extends EntityProcessingSystem {
     }
   }
 
+  bool doCirclesCollide(x1, y1, r1, x2, y2, r2) {
+    var distX = x1 - x2;
+    var distY = y1 - y2;
+    var distForCollision = r1 + r2;
+    var dist = sqrt(distX * distX + distY * distY);
+    return dist < distForCollision;
+  }
 
-  checkProcessing() => gameState.running && activeFor.contains(gameState.gameId);
+  checkProcessing() =>
+      gameState.running && activeFor.contains(gameState.gameId);
 }
 
 void createSound(World world, String name) {

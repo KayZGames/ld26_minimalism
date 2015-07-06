@@ -5,7 +5,6 @@ import 'dart:html';
 import 'dart:math';
 
 import 'package:dartemis/dartemis.dart';
-import 'package:canvas_query/canvas_query.dart';
 import 'package:simple_audio/simple_audio.dart';
 import 'package:lawndart/lawndart.dart';
 
@@ -38,22 +37,21 @@ const GROUP_GAME = 'gamegroup';
 Random random = new Random();
 
 void main() {
-  var wrapper = cq('#gameCanvas');
-  wrapper..canvas.height = HEIGHT
-         ..canvas.width = WIDTH
-         ..textBaseline = 'top'
+  var wrapper = querySelector('#gameCanvas') as CanvasElement;
+  wrapper..height = HEIGHT
+         ..width = WIDTH;
+  wrapper.context2D..textBaseline = 'top'
          ..font = '20px Verdana'
          ..fillStyle = '#140c1c';
 
   var audioManager = createAudioManager();
-  var store = createStore();
 
   Future.wait([audioManager.makeClip('achievement', 'achievement.ogg').load(),
                audioManager.makeClip('dodgeballhit', 'dodgeballhit.ogg').load(),
                audioManager.makeClip('blockdestroyed', 'blockdestroyed.ogg').load(),
                audioManager.makeClip('paddlehit', 'paddlehit.ogg').load(),
-               store.open()]).then((_) {
-    new Game(wrapper, audioManager, store).start();
+               Store.open('ld26', 'gameState')]).then((result) {
+    new Game(wrapper, audioManager, result[4] as Store).start();
   });
 }
 
@@ -92,7 +90,7 @@ class Game {
   GameState gameState = new GameState();
   World world = new World();
   num lastTime;
-  CanvasQuery cq;
+  CanvasElement cq;
   AudioManager audioManager;
   Store store;
 
@@ -122,12 +120,12 @@ class Game {
     world.addSystem(new MovementSystem(gameState));
     world.addSystem(new PongCollisionDetectionSystem(gameState));
     world.addSystem(new DodgeballScoringSystem(gameState));
-    world.addSystem(new BackgroundRenderingSystem(cq));
-    world.addSystem(new RectangleRenderingSystem(cq));
-    world.addSystem(new CircleRenderingSystem(cq));
-    world.addSystem(new MenuRenderingSystem(cq, gameState));
-    world.addSystem(new GameStateRenderingSystem(cq, gameState));
-    world.addSystem(new AchievementRenderingSystem(cq, gameState));
+    world.addSystem(new BackgroundRenderingSystem(cq.context2D));
+    world.addSystem(new RectangleRenderingSystem(cq.context2D));
+    world.addSystem(new CircleRenderingSystem(cq.context2D));
+    world.addSystem(new MenuRenderingSystem(cq.context2D, gameState));
+    world.addSystem(new GameStateRenderingSystem(cq.context2D, gameState));
+    world.addSystem(new AchievementRenderingSystem(cq.context2D, gameState));
     world.addSystem(new SoundSystem(audioManager));
     world.addSystem(new HighScoreSavingSystem(store, gameState));
     world.addSystem(new GameSwitchingSystem(gameState));
